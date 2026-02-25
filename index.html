@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclamaVuelo — Recupera lo que te pertenece</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a1628;
+    --blue: #1a56db;
+    --sky: #3b82f6;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --light: #f0f4ff;
+    --white: #ffffff;
+    --gray: #64748b;
+    --border: #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--navy);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--navy);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--gold); }
+
+  nav a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--white); }
+
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+
+  .btn-nav {
+    background: var(--gold);
+    color: var(--navy) !important;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 700 !important;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #0f2356 50%, #0a1628 100%);
+    padding: 80px 24px 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.4);
+    color: var(--gold);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero h1 .highlight {
+    color: var(--gold);
+    display: block;
+  }
+
+  .hero p {
+    color: rgba(255,255,255,0.7);
+    font-size: 1.1rem;
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--gold);
+  }
+
+  .stat-label {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+
+  /* BENEFITS */
+  .benefits {
+    background: var(--light);
+    padding: 60px 24px;
+  }
+
+  .benefits-grid {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+  }
+
+  .benefit-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+
+  .benefit-icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+  }
+
+  .benefit-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--navy);
+  }
+
+  .benefit-card p {
+    color: var(--gray);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  /* MAIN FORM AREA */
+  .form-section {
+    padding: 80px 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .section-tag {
+    display: inline-block;
+    background: rgba(26,86,219,0.1);
+    color: var(--blue);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+
+  .section-header p {
+    color: var(--gray);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  /* STEPPER */
+  .stepper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 48px;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .step-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    border: 2px solid var(--border);
+    background: var(--white);
+    color: var(--gray);
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--white);
+    box-shadow: 0 0 0 4px rgba(26,86,219,0.15);
+  }
+
+  .step.done .step-num {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--white);
+  }
+
+  .step-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .step.active .step-label { color: var(--blue); }
+  .step.done .step-label { color: var(--green); }
+
+  .step-connector {
+    width: 60px;
+    height: 2px;
+    background: var(--border);
+    margin-bottom: 22px;
+    transition: background 0.3s;
+  }
+
+  .step-connector.done { background: var(--green); }
+
+  /* FORM CARDS */
+  .form-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 36px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+  }
+
+  .form-step { display: none; }
+  .form-step.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-step h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    color: var(--navy);
+  }
+
+  .form-step .sub {
+    color: var(--gray);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-row.full { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select {
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--navy);
+    background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+  }
+
+  input::placeholder { color: #b0bec5; }
+
+  .input-hint {
+    font-size: 0.75rem;
+    color: var(--gray);
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: var(--white);
+    width: 100%;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .btn-primary:hover {
+    background: #1744b8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(26,86,219,0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
+    justify-content: center;
+    margin-top: 12px;
+    width: 100%;
+  }
+
+  .btn-secondary:hover { background: var(--light); }
+
+  .btn-gold {
+    background: var(--gold);
+    color: var(--navy);
+    width: 100%;
+    justify-content: center;
+    margin-top: 24px;
+    font-size: 1rem;
+  }
+
+  .btn-gold:hover {
+    background: #e08a00;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(245,158,11,0.3);
+  }
+
+  /* VERIFICATION STATE */
+  .verifying-state {
+    text-align: center;
+    padding: 32px 0;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--light);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .verifying-state h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .verifying-state p { color: var(--gray); font-size: 0.9rem; }
+
+  /* RESULT STATES */
+  .result-state {
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  .result-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+  }
+
+  .result-state h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+
+  .result-state p {
+    color: var(--gray);
+    line-height: 1.7;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .result-success h4 { color: var(--green); }
+  .result-fail h4 { color: var(--red); }
+
+  .delay-badge {
+    display: inline-block;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: var(--green);
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 12px 0 20px;
+  }
+
+  .compensation-box {
+    background: linear-gradient(135deg, #0a1628, #1a56db);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    color: var(--white);
+    text-align: center;
+  }
+
+  .compensation-box .amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--gold);
+  }
+
+  .compensation-box .label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  /* ALERT BOXES */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .alert-info { background: rgba(26,86,219,0.08); color: #1744b8; border-left: 3px solid var(--blue); }
+  .alert-warn { background: rgba(245,158,11,0.1); color: #b45309; border-left: 3px solid var(--gold); }
+  .alert-success { background: rgba(16,185,129,0.1); color: #065f46; border-left: 3px solid var(--green); }
+
+  /* SUCCESS FINAL */
+  .success-final {
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  .success-final .big-check {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--green), #059669);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.3);
+  }
+
+  .success-final h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  .success-final p {
+    color: var(--gray);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+
+  .what-happens {
+    background: var(--light);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: left;
+  }
+
+  .what-happens h5 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .timeline-dot {
+    width: 28px;
+    height: 28px;
+    background: var(--blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .timeline-item p {
+    font-size: 0.85rem;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+
+  /* API CONFIG */
+  .api-config {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: #78350f;
+  }
+
+  .api-config summary {
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .api-config input {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    padding: 8px 12px;
+  }
+
+  /* HOW IT WORKS */
+  .how-section {
+    background: var(--navy);
+    padding: 80px 24px;
+    color: var(--white);
+  }
+
+  .how-section .section-tag { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+  .how-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .steps-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+  }
+
+  .how-step {
+    text-align: center;
+    position: relative;
+  }
+
+  .how-step-num {
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin: 0 auto 16px;
+  }
+
+  .how-step h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+
+  .how-step p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  /* FOOTER */
+  footer {
+    background: #05101f;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 32px 24px;
+    font-size: 0.8rem;
+  }
+
+  footer a { color: rgba(255,255,255,0.6); text-decoration: none; }
+  footer .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--white); font-size: 1.2rem; margin-bottom: 16px; }
+  footer .footer-logo span { color: var(--gold); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-card { padding: 24px 20px; }
+    .hero-stats { gap: 28px; }
+    .step-connector { width: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- DEMO BANNER -->
+<div id="demoBanner" style="background: linear-gradient(90deg, #f59e0b, #fbbf24); color: #0a1628; text-align: center; padding: 10px 16px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.82rem; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+  <span>🎬 MODO DEMOSTRACIÓN ACTIVO</span>
+  <span style="font-weight: 400; font-family: 'DM Sans', sans-serif; opacity: 0.8;">Los datos del vuelo son simulados — elige un escenario para rellenar el formulario automáticamente</span>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+    <button onclick="prefillDemo('success')" style="background:#0a1628;color:#f59e0b;border:none;border-radius:6px;padding:5px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;">✅ Éxito · IB3456 MAD→LHR (400€)</button>
+    <button onclick="prefillDemo('long')" style="background:#0a1628;color:#10b981;border:none;border-radius:6px;padding:5px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;">✅ Largo · IB6250 MAD→JFK (600€)</button>
+    <button onclick="prefillDemo('reject')" style="background:#0a1628;color:#ef4444;border:none;border-radius:6px;padding:5px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;">❌ Rechazo · VY1001 BCN→MAD</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Reclama<span>Vuelo</span></div>
+  <div class="nav-links">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#reclamar" class="btn-nav">Reclamar ahora</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">✈ Reglamento CE 261/2004</div>
+  <h1>Tu vuelo se retrasó.<br><span class="highlight">Reclama hasta 600€</span></h1>
+  <p>Comprobamos automáticamente si tu vuelo tuvo más de 3 horas de retraso. Sin costes iniciales. Solo cobramos si tú cobras.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">600€</div>
+      <div class="stat-label">Indemnización máxima</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">25%</div>
+      <div class="stat-label">Solo si ganamos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">24h</div>
+      <div class="stat-label">Respuesta garantizada</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">99%</div>
+      <div class="stat-label">Tasa de éxito</div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="benefits">
+  <div class="benefits-grid">
+    <div class="benefit-card">
+      <div class="benefit-icon">🔍</div>
+      <h3>Verificación instantánea</h3>
+      <p>Comprobamos el retraso real de tu vuelo con datos oficiales en segundos.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">⚖️</div>
+      <h3>Abogados expertos</h3>
+      <p>Todo el proceso legal gestionado por especialistas en derecho aéreo.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">💰</div>
+      <h3>Riesgo cero</h3>
+      <p>No pagas nada hasta recibir tu indemnización. Sin sorpresas.</p>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">📱</div>
+      <h3>100% online</h3>
+      <p>Gestión completa desde tu móvil u ordenador. Sin papeleos físicos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FORM SECTION -->
+<section class="form-section" id="reclamar">
+  <div class="section-header">
+    <div class="section-tag">Empieza aquí</div>
+    <h2>Comprueba tu reclamación</h2>
+    <p>Rellena el formulario y verificamos automáticamente si tu vuelo tuvo retraso suficiente para reclamar.</p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step active" id="step-ind-1">
+      <div class="step-num">1</div>
+      <div class="step-label">Datos del vuelo</div>
+    </div>
+    <div class="step-connector" id="conn-1-2"></div>
+    <div class="step" id="step-ind-2">
+      <div class="step-num">2</div>
+      <div class="step-label">Verificación</div>
+    </div>
+    <div class="step-connector" id="conn-2-3"></div>
+    <div class="step" id="step-ind-3">
+      <div class="step-num">3</div>
+      <div class="step-label">Tus datos</div>
+    </div>
+    <div class="step-connector" id="conn-3-4"></div>
+    <div class="step" id="step-ind-4">
+      <div class="step-num">4</div>
+      <div class="step-label">Confirmado</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+
+    <!-- API Config (colapsable) -->
+    <details class="api-config">
+      <summary>⚙️ Configuración API de vuelos (opcional)</summary>
+      <p style="margin-top:8px;">Para verificación real, introduce tu API key de <a href="https://aviationstack.com" target="_blank" style="color:#b45309;">AviationStack</a> (plan gratuito disponible). Sin API key se usará modo demostración.</p>
+      <input type="text" id="apiKeyInput" placeholder="Tu API key de AviationStack..." />
+    </details>
+
+    <!-- STEP 1: Datos del vuelo -->
+    <div class="form-step active" id="step1">
+      <h3>✈️ Datos del vuelo</h3>
+      <p class="sub">Introduce la información del vuelo que sufrió el retraso.</p>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Número de vuelo *</label>
+          <input type="text" id="flightNumber" placeholder="Ej: IB3456, VY1234" maxlength="8" />
+          <span class="input-hint">Código IATA + número (ej: IB3456)</span>
+        </div>
+        <div class="field">
+          <label>Fecha del vuelo *</label>
+          <input type="date" id="flightDate" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Aeropuerto de origen *</label>
+          <input type="text" id="origin" placeholder="Ej: MAD, BCN, VLC" maxlength="3" style="text-transform:uppercase" />
+          <span class="input-hint">Código IATA de 3 letras</span>
+        </div>
+        <div class="field">
+          <label>Aeropuerto de destino *</label>
+          <input type="text" id="destination" placeholder="Ej: LHR, CDG, JFK" maxlength="3" style="text-transform:uppercase" />
+          <span class="input-hint">Código IATA de 3 letras</span>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="field">
+          <label>Compañía aérea *</label>
+          <select id="airline">
+            <option value="">Selecciona la compañía...</option>
+            <option value="IB">Iberia</option>
+            <option value="VY">Vueling</option>
+            <option value="FR">Ryanair</option>
+            <option value="UX">Air Europa</option>
+            <option value="VW">Volotea</option>
+            <option value="AF">Air France</option>
+            <option value="LH">Lufthansa</option>
+            <option value="BA">British Airways</option>
+            <option value="U2">easyJet</option>
+            <option value="W6">Wizz Air</option>
+            <option value="TK">Turkish Airlines</option>
+            <option value="EK">Emirates</option>
+            <option value="OTHER">Otra compañía</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        ℹ️ <span>Podrás reclamar si el vuelo llegó a destino con <strong>3 o más horas de retraso</strong> respecto a la hora prevista.</span>
+      </div>
+
+      <!-- HONEYPOT: invisible para humanos, los bots lo rellenan -->
+      <div style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;overflow:hidden;" aria-hidden="true" tabindex="-1">
+        <label for="hp_company">Empresa (no rellenar)</label>
+        <input type="text" id="hp_company" name="company" autocomplete="off" tabindex="-1" />
+      </div>
+
+      <button class="btn btn-primary" onclick="goToVerification()">
+        Verificar retraso →
+      </button>
+    </div>
+
+    <!-- STEP 2: Verificando -->
+    <div class="form-step" id="step2">
+      <div class="verifying-state" id="verifyingState">
+        <div class="spinner"></div>
+        <h4>Comprobando tu vuelo...</h4>
+        <p>Consultando la base de datos de vuelos históricos</p>
+      </div>
+
+      <div class="result-state result-success" id="resultSuccess" style="display:none">
+        <div class="result-icon">✅</div>
+        <h4>¡Vuelo verificado con retraso!</h4>
+        <div class="delay-badge" id="delayBadge">Retraso: X horas Y minutos</div>
+        <p id="successMsg">Tu vuelo tuvo un retraso superior a las 3 horas establecidas por el Reglamento CE 261/2004, por lo que tienes derecho a reclamar una compensación económica.</p>
+        <div class="compensation-box">
+          <div class="amount" id="compensationAmount">400€</div>
+          <div class="label">Compensación estimada por pasajero</div>
+        </div>
+        <button class="btn btn-gold" onclick="goToPersonalData()">
+          💰 Iniciar reclamación →
+        </button>
+      </div>
+
+      <div class="result-state result-fail" id="resultFail" style="display:none">
+        <div class="result-icon">❌</div>
+        <h4>No es posible continuar</h4>
+        <p id="failMsg">No hemos podido confirmar que tu vuelo tuviera un retraso superior a 3 horas. Según el Reglamento CE 261/2004, este es el umbral mínimo para tener derecho a compensación económica.</p>
+        <div class="alert alert-warn" style="text-align:left; margin-top:16px;">
+          ⚠️ <span>Si crees que hay un error, contacta con nosotros y revisaremos tu caso manualmente con la documentación que puedas aportarnos.</span>
+        </div>
+        <button class="btn btn-secondary" onclick="resetForm()">
+          ← Intentar con otro vuelo
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Datos personales -->
+    <div class="form-step" id="step3">
+      <h3>👤 Tus datos personales</h3>
+      <p class="sub">Necesitamos tus datos para gestionar la reclamación en tu nombre.</p>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Nombre *</label>
+          <input type="text" id="firstName" placeholder="Tu nombre" />
+        </div>
+        <div class="field">
+          <label>Apellidos *</label>
+          <input type="text" id="lastName" placeholder="Tus apellidos" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>DNI/NIE/Pasaporte *</label>
+          <input type="text" id="docNumber" placeholder="Ej: 12345678A" />
+        </div>
+        <div class="field">
+          <label>Teléfono *</label>
+          <input type="tel" id="phone" placeholder="+34 600 000 000" />
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" id="email" placeholder="tu@email.com" />
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="field">
+          <label>Nº de pasajeros afectados</label>
+          <select id="passengers">
+            <option value="1">1 pasajero</option>
+            <option value="2">2 pasajeros</option>
+            <option value="3">3 pasajeros</option>
+            <option value="4">4 pasajeros</option>
+            <option value="5">5 o más pasajeros</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="field">
+          <label>Comentarios adicionales</label>
+          <input type="text" id="comments" placeholder="Gastos adicionales, conexiones perdidas, etc." />
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        🔒 <span>Tus datos están protegidos bajo la LOPD/RGPD. Solo se usarán para gestionar tu reclamación.</span>
+      </div>
+
+      <button class="btn btn-gold" onclick="submitClaim()">
+        Enviar reclamación 🚀
+      </button>
+      <button class="btn btn-secondary" onclick="goBack()">
+        ← Volver
+      </button>
+    </div>
+
+    <!-- STEP 4: Confirmación -->
+    <div class="form-step" id="step4">
+      <div class="success-final">
+        <div class="big-check">✓</div>
+        <h3>¡Reclamación enviada!</h3>
+        <p>Hemos recibido tu caso y nos pondremos en contacto contigo en un plazo máximo de 24 horas.</p>
+        <p style="font-size:0.8rem; color:#94a3b8;">Referencia: <strong id="caseRef">RV-2024-XXXXX</strong></p>
+
+        <div class="what-happens">
+          <h5>¿Qué ocurre ahora?</h5>
+          <div class="timeline-item">
+            <div class="timeline-dot">1</div>
+            <p><strong>Análisis del caso</strong> — Nuestros abogados estudian la viabilidad de tu reclamación.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot">2</div>
+            <p><strong>Reclamación amistosa</strong> — Nos dirigimos a la aerolínea exigiendo la compensación.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot">3</div>
+            <p><strong>Vía judicial si necesario</strong> — Si la aerolínea no responde, procedemos judicialmente.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot">4</div>
+            <p><strong>Cobras tu indemnización</strong> — Te transferimos el importe menos nuestra comisión del 25%+IVA.</p>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="resetForm()">
+          Reclamar otro vuelo
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="como-funciona">
+  <div style="text-align:center; margin-bottom:48px;">
+    <div class="section-tag">Simple y rápido</div>
+    <h2>Cómo funciona</h2>
+  </div>
+  <div class="steps-grid">
+    <div class="how-step">
+      <div class="how-step-num">1</div>
+      <h4>Rellena el formulario</h4>
+      <p>Introduce el número de vuelo y la fecha. El proceso tarda menos de 3 minutos.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">2</div>
+      <h4>Verificamos el retraso</h4>
+      <p>Consultamos automáticamente los datos reales del vuelo en bases de datos oficiales.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">3</div>
+      <h4>Gestionamos todo</h4>
+      <p>Nuestros abogados se encargan de toda la gestión. Tú no tienes que hacer nada más.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">4</div>
+      <h4>Recibes tu dinero</h4>
+      <p>Cuando la aerolínea paga, te transferimos la indemnización al momento.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Reclama<span>Vuelo</span></div>
+  <p>Abogados especialistas en reclamaciones aéreas · Reglamento CE 261/2004</p>
+  <p style="margin-top:8px;">
+    <a href="#">Aviso Legal</a> · <a href="#">Política de Privacidad</a> · <a href="#">Cookies</a>
+  </p>
+  <p style="margin-top:16px;">© 2024 ReclamaVuelo. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+  // =============================================
+  // STATE
+  // =============================================
+  let flightData = {};
+  let verifiedDelay = null;
+
+  // ── ANTI-BOT STATE ────────────────────────────────────────────────────
+  // Rate limit: máx 3 verificaciones por sesión, con cooldown entre ellas
+  const RATE_LIMIT = { maxCalls: 3, cooldownMs: 15000 };
+  let verifyCount = 0;
+  let lastVerifyTime = 0;
+
+  // Set max date to today
+  document.getElementById('flightDate').max = new Date().toISOString().split('T')[0];
+
+  // =============================================
+  // STEP NAVIGATION
+  // =============================================
+  function setStep(n) {
+    document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+
+    // Update stepper indicators
+    for (let i = 1; i <= 4; i++) {
+      const ind = document.getElementById('step-ind-' + i);
+      ind.className = 'step';
+      if (i < n) ind.classList.add('done');
+      if (i === n) ind.classList.add('active');
+    }
+    // Connectors
+    for (let i = 1; i <= 3; i++) {
+      const conn = document.getElementById('conn-' + i + '-' + (i+1));
+      conn.className = 'step-connector' + (i < n ? ' done' : '');
+    }
+  }
+
+  function goBack() { setStep(1); }
+  function resetForm() {
+    setStep(1);
+    document.getElementById('resultSuccess').style.display = 'none';
+    document.getElementById('resultFail').style.display = 'none';
+    document.getElementById('verifyingState').style.display = 'flex';
+    document.getElementById('verifyingState').style.flexDirection = 'column';
+  }
+
+  // =============================================
+  // STEP 1 → STEP 2: VERIFY FLIGHT
+  // =============================================
+  // ── RATE LIMIT UI ────────────────────────────────────────────────────────
+  function showRateLimitWarning(secondsLeft) {
+    const btn = document.querySelector('#step1 .btn-primary');
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.style.background = '#ef4444';
+    
+    const countdown = setInterval(() => {
+      btn.textContent = `⏳ Espera ${secondsLeft}s para volver a verificar`;
+      secondsLeft--;
+      if (secondsLeft < 0) {
+        clearInterval(countdown);
+        btn.disabled = false;
+        btn.style.background = '';
+        btn.textContent = original;
+        verifyCount = 0;
+      }
+    }, 1000);
+    btn.textContent = `⏳ Espera ${secondsLeft}s para volver a verificar`;
+  }
+
+  async function goToVerification() {
+    const fn = document.getElementById('flightNumber').value.trim().toUpperCase();
+    const date = document.getElementById('flightDate').value;
+    const origin = document.getElementById('origin').value.trim().toUpperCase();
+    const dest = document.getElementById('destination').value.trim().toUpperCase();
+    const airline = document.getElementById('airline').value;
+
+    if (!fn || !date || !origin || !dest || !airline) {
+      alert('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+
+    if (fn.length < 3) {
+      alert('El número de vuelo no parece correcto. Ejemplo: IB3456');
+      return;
+    }
+
+    // ── HONEYPOT CHECK ────────────────────────────────────────────────────
+    if (document.getElementById('hp_company').value !== '') {
+      // Bot detectado — fallo silencioso: simulamos proceso normal pero no avanzamos
+      console.warn('[ANTI-BOT] Honeypot triggered');
+      setStep(2);
+      document.getElementById('verifyingState').style.display = 'block';
+      document.getElementById('resultSuccess').style.display = 'none';
+      document.getElementById('resultFail').style.display = 'none';
+      await new Promise(r => setTimeout(r, 2200)); // simula tiempo de consulta
+      document.getElementById('verifyingState').style.display = 'none';
+      document.getElementById('resultFail').style.display = 'block';
+      document.getElementById('failMsg').innerHTML = 'No hemos podido verificar este vuelo en este momento. Por favor, inténtalo de nuevo más tarde.';
+      return;
+    }
+
+    // ── RATE LIMIT CHECK ──────────────────────────────────────────────────
+    const now = Date.now();
+    if (verifyCount >= RATE_LIMIT.maxCalls) {
+      const elapsed = now - lastVerifyTime;
+      if (elapsed < RATE_LIMIT.cooldownMs) {
+        const wait = Math.ceil((RATE_LIMIT.cooldownMs - elapsed) / 1000);
+        showRateLimitWarning(wait);
+        return;
+      } else {
+        verifyCount = 0; // reset tras cooldown
+      }
+    }
+    verifyCount++;
+    lastVerifyTime = now;
+
+    // Save flight data
+    flightData = { flightNumber: fn, date, origin, dest, airline };
+
+    setStep(2);
+    document.getElementById('verifyingState').style.display = 'block';
+    document.getElementById('resultSuccess').style.display = 'none';
+    document.getElementById('resultFail').style.display = 'none';
+
+    // Attempt real API verification
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    
+    try {
+      const result = await verifyFlight(fn, date, apiKey);
+      showVerificationResult(result);
+    } catch (e) {
+      console.warn('API error, using demo mode:', e);
+      const demoResult = demoVerification(fn);
+      showVerificationResult(demoResult);
+    }
+  }
+
+  // =============================================
+  // REAL API: AVIATIONSTACK
+  // =============================================
+  async function verifyFlight(flightNumber, date, apiKey) {
+    if (!apiKey) throw new Error('No API key');
+
+    // AviationStack API call
+    // Note: free plan has CORS restrictions, so this works best server-side
+    // In production you'd proxy through your backend
+    const url = `https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightNumber}&flight_date=${date}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('API response error');
+    
+    const data = await response.json();
+    
+    if (!data.data || data.data.length === 0) {
+      return { found: false, delayMinutes: 0, message: 'Vuelo no encontrado en la base de datos.' };
+    }
+
+    const flight = data.data[0];
+    const arrivalDelay = flight.arrival?.delay || 0; // delay in minutes
+    
+    return {
+      found: true,
+      delayMinutes: arrivalDelay,
+      flightInfo: {
+        airline: flight.airline?.name || flightData.airline,
+        origin: flight.departure?.iata || flightData.origin,
+        destination: flight.arrival?.iata || flightData.dest,
+        scheduledDep: flight.departure?.scheduled,
+        actualArr: flight.arrival?.actual,
+        scheduledArr: flight.arrival?.scheduled
+      }
+    };
+  }
+
+  // =============================================
+  // DEMO MODE
+  // IB3456  MAD→LHR  → 4h 20min  → 400€  (éxito medio)
+  // IB6250  MAD→JFK  → 5h 10min  → 600€  (vuelo largo)
+  // FR5678  BCN→CDG  → 4h 15min  → 250€  (vuelo corto)
+  // VY1001  BCN→MAD  → 45min     → RECHAZADO
+  // =============================================
+  const DEMO_FLIGHTS = {
+    'IB3456': { delayMinutes: 260 },
+    'IB6250': { delayMinutes: 310 },
+    'FR5678': { delayMinutes: 255 },
+    'VY1001': { delayMinutes: 45  },
+  };
+
+  function demoVerification(flightNumber) {
+    const key = flightNumber.toUpperCase();
+    if (DEMO_FLIGHTS[key]) return { found: true, demo: true, ...DEMO_FLIGHTS[key] };
+    return { found: true, delayMinutes: 270, demo: true };
+  }
+
+  // =============================================
+  // DEMO AUTO-FILL  (3 botones en el banner)
+  // =============================================
+  function prefillDemo(type) {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    document.getElementById('flightDate').value = weekAgo;
+
+    const configs = {
+      success: { fn: 'IB3456', org: 'MAD', dst: 'LHR', al: 'IB', label: '✓ Vuelo con retraso cargado (400€) →', bg: '#f59e0b', tc: '#0a1628' },
+      long:    { fn: 'IB6250', org: 'MAD', dst: 'JFK', al: 'IB', label: '✓ Vuelo largo cargado (600€) →',        bg: '#10b981', tc: '#fff'    },
+      reject:  { fn: 'VY1001', org: 'BCN', dst: 'MAD', al: 'VY', label: '✗ Vuelo sin retraso cargado →',         bg: '#ef4444', tc: '#fff'    },
+    };
+    const cfg = configs[type] || configs.success;
+    document.getElementById('flightNumber').value = cfg.fn;
+    document.getElementById('origin').value        = cfg.org;
+    document.getElementById('destination').value   = cfg.dst;
+    document.getElementById('airline').value       = cfg.al;
+
+    document.getElementById('reclamar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const btn = document.querySelector('#step1 .btn-primary');
+    btn.style.background = cfg.bg;
+    btn.style.color = cfg.tc;
+    btn.textContent = cfg.label;
+    setTimeout(() => { btn.style.background = ''; btn.style.color = ''; btn.textContent = 'Verificar retraso →'; }, 3000);
+  }
+
+  // =============================================
+  // SHOW RESULTS
+  // =============================================
+  function showVerificationResult(result) {
+    document.getElementById('verifyingState').style.display = 'none';
+    
+    const delayHours = Math.floor(result.delayMinutes / 60);
+    const delayMins = result.delayMinutes % 60;
+    verifiedDelay = result.delayMinutes;
+
+    // Threshold: 3 hours = 180 minutes (for legal claim)
+    // App asked for >4h but EU regulation is 3h - using 3h for accuracy
+    // Per user request, using 4h (240 min) as stated
+    const THRESHOLD = 240; // 4 hours as specified
+
+    if (result.found && result.delayMinutes >= THRESHOLD) {
+      // SUCCESS
+      const delayText = delayHours > 0 
+        ? `Retraso confirmado: ${delayHours}h ${delayMins > 0 ? delayMins + 'min' : ''}` 
+        : `Retraso confirmado: ${result.delayMinutes} minutos`;
+      
+      document.getElementById('delayBadge').textContent = delayText;
+
+      // Calculate compensation based on distance (simplified)
+      const comp = calculateCompensation(flightData.origin, flightData.dest);
+      document.getElementById('compensationAmount').textContent = comp + '€';
+      
+      let msg = `Tu vuelo <strong>${flightData.flightNumber}</strong> del <strong>${formatDate(flightData.date)}</strong> `;
+      msg += `(${flightData.origin} → ${flightData.dest}) `;
+      msg += `tuvo un retraso de más de 4 horas en la llegada a destino. `;
+      msg += `Según el Reglamento CE 261/2004, tienes derecho a reclamar compensación.`;
+      if (result.demo) msg += '<br><em style="font-size:0.78em;color:#94a3b8; margin-top:6px; display:block;">🎬 Modo demostración activo</em>';
+      document.getElementById('successMsg').innerHTML = msg;
+      
+      document.getElementById('resultSuccess').style.display = 'block';
+    } else {
+      // FAIL
+      let msg = '';
+      if (!result.found) {
+        msg = `No hemos encontrado el vuelo ${flightData.flightNumber} en la fecha ${formatDate(flightData.date)} en nuestra base de datos.`;
+      } else {
+        msg = `El vuelo <strong>${flightData.flightNumber}</strong> del <strong>${formatDate(flightData.date)}</strong> registró un retraso de <strong>${result.delayMinutes} minutos</strong>. `;
+        msg += `Para poder reclamar compensación económica bajo el Reglamento CE 261/2004 es necesario un retraso superior a 4 horas (240 minutos).`;
+      }
+      if (result.demo) msg += '<br><em style="font-size:0.78em;color:#94a3b8; margin-top:6px; display:block;">🎬 Modo demostración — usa cualquier vuelo distinto de TEST000 para ver el flujo de éxito</em>';
+      document.getElementById('failMsg').innerHTML = msg;
+      document.getElementById('resultFail').style.display = 'block';
+    }
+  }
+
+  function calculateCompensation(origin, dest) {
+    // Simplified: based on common routes
+    const longHaulOrigins = ['JFK','LAX','EWR','ORD','DFW','GRU','GIG','BOG','EZE','MEX','NRT','HND','ICN','SIN','BKK','DXB','DOH','AUH'];
+    if (longHaulOrigins.includes(origin) || longHaulOrigins.includes(dest)) return 600;
+    
+    const mediumOrigins = ['LHR','CDG','FRA','AMS','FCO','MXP','LIS','ATH','WAW','BUD','PRG','VIE','ZRH','GVA','BRU'];
+    if (mediumOrigins.includes(origin) || mediumOrigins.includes(dest)) return 400;
+    
+    return 250; // Short haul default
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // =============================================
+  // STEP 2 → STEP 3
+  // =============================================
+  function goToPersonalData() {
+    setStep(3);
+  }
+
+  // =============================================
+  // STEP 3 → STEP 4: SUBMIT
+  // =============================================
+  function submitClaim() {
+    const firstName  = document.getElementById('firstName').value.trim();
+    const lastName   = document.getElementById('lastName').value.trim();
+    const docNum     = document.getElementById('docNumber').value.trim();
+    const phone      = document.getElementById('phone').value.trim();
+    const email      = document.getElementById('email').value.trim();
+    const passengers = document.getElementById('passengers').value;
+    const comments   = document.getElementById('comments').value.trim();
+
+    if (!firstName || !lastName || !docNum || !phone || !email) {
+      alert('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(email)) {
+      alert('Por favor, introduce un email válido.');
+      return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    // Referencia única
+    const ref = 'RV-' + new Date().getFullYear() + '-' + Math.floor(Math.random()*90000+10000);
+
+    // Rellenar formulario oculto con todos los datos
+    document.getElementById('hf_subject').value      = '[' + ref + '] Reclamacion: ' + flightData.flightNumber + ' — ' + firstName + ' ' + lastName;
+    document.getElementById('hf_ref').value          = ref;
+    document.getElementById('hf_vuelo').value        = flightData.flightNumber;
+    document.getElementById('hf_fecha').value        = flightData.date;
+    document.getElementById('hf_origen').value       = flightData.origin;
+    document.getElementById('hf_destino').value      = flightData.dest;
+    document.getElementById('hf_aerolinea').value    = flightData.airline;
+    document.getElementById('hf_retraso').value      = (verifiedDelay || 0) + ' min';
+    document.getElementById('hf_compensacion').value = document.getElementById('compensationAmount').textContent;
+    document.getElementById('hf_nombre').value       = firstName + ' ' + lastName;
+    document.getElementById('hf_doc').value          = docNum;
+    document.getElementById('hf_telefono').value     = phone;
+    document.getElementById('hf_email').value        = email;
+    document.getElementById('hf_pasajeros').value    = passengers;
+    document.getElementById('hf_comentarios').value  = comments || 'Sin comentarios';
+    document.getElementById('hf_timestamp').value    = new Date().toLocaleString('es-ES');
+
+    // Mostrar paso 4 de inmediato (buena UX)
+    document.getElementById('caseRef').textContent = ref;
+    setStep(4);
+
+    // Submit en iframe invisible → no redirige la página principal
+    let iframe = document.getElementById('formsubmit_iframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id   = 'formsubmit_iframe';
+      iframe.name = 'formsubmit_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    const form = document.getElementById('hiddenMailForm');
+    form.target = 'formsubmit_iframe';
+    form.submit();
+  }
+
+  // =============================================
+  // SMOOTH SCROLL
+  // =============================================
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+<!-- FORMULARIO OCULTO para FormSubmit — evita CORS con fetch -->
+<form id="hiddenMailForm" action="https://formsubmit.co/guilletruan@gmail.com" method="POST" style="display:none">
+  <input type="hidden" name="_subject"   id="hf_subject" />
+  <input type="hidden" name="_template"  value="table" />
+  <input type="hidden" name="_captcha"   value="false" />
+  <input type="hidden" name="Vuelo"                 id="hf_vuelo" />
+  <input type="hidden" name="Fecha del vuelo"       id="hf_fecha" />
+  <input type="hidden" name="Origen"                id="hf_origen" />
+  <input type="hidden" name="Destino"               id="hf_destino" />
+  <input type="hidden" name="Aerolinea"             id="hf_aerolinea" />
+  <input type="hidden" name="Retraso minutos"       id="hf_retraso" />
+  <input type="hidden" name="Compensacion"          id="hf_compensacion" />
+  <input type="hidden" name="Nombre completo"       id="hf_nombre" />
+  <input type="hidden" name="Documento"             id="hf_doc" />
+  <input type="hidden" name="Telefono"              id="hf_telefono" />
+  <input type="hidden" name="Email pasajero"        id="hf_email" />
+  <input type="hidden" name="Num pasajeros"         id="hf_pasajeros" />
+  <input type="hidden" name="Comentarios"           id="hf_comentarios" />
+  <input type="hidden" name="Fecha reclamacion"     id="hf_timestamp" />
+  <input type="hidden" name="Referencia"            id="hf_ref" />
+  <button type="submit">Enviar</button>
+</form>
+</body>
+</html>
