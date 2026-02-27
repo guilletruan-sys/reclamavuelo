@@ -1,6 +1,9 @@
 // pages/index.jsx
 import { useState } from 'react';
 import Head from 'next/head';
+import Nav from '../components/Nav';
+import Footer from '../components/Footer';
+import { GREEN, NAVY, BLUE, LIGHT_G, globalStyles, inputStyle, selectStyle } from '../lib/theme';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 
@@ -182,20 +185,7 @@ const AIRPORT_GROUPS = AIRPORTS.reduce((acc, a) => {
   return acc;
 }, {});
 
-// ── SHARED STYLES ─────────────────────────────────────────────────────────────
-
-const GREEN   = '#10b981';
-const NAVY    = '#0a1628';
-const BLUE    = '#1a56db';
-const LIGHT_G = 'rgba(16,185,129,0.08)';
-
-const inputStyle = {
-  padding: '11px 13px', border: '1.5px solid #e2e8f0', borderRadius: 8,
-  fontSize: 15, fontFamily: 'DM Sans, sans-serif', color: NAVY,
-  background: '#fff', width: '100%', boxSizing: 'border-box',
-  outline: 'none', transition: 'border-color 0.2s',
-};
-const selectStyle = { ...inputStyle };
+// ── LOCAL STYLE OVERRIDES ─────────────────────────────────────────────────────
 
 // ── AUXILIARY COMPONENTS ──────────────────────────────────────────────────────
 
@@ -486,34 +476,8 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
 
-      <style>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: #f0f9f4; color: ${NAVY}; }
-        a { text-decoration: none; }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-up { animation: fadeUp 0.5s ease both; }
-        @media (max-width: 600px) {
-          .grid2 { grid-template-columns: 1fr !important; }
-          .hide-mobile { display: none !important; }
-          .hero-title { font-size: 2rem !important; }
-        }
-      `}</style>
-
-      {/* ── NAV ── */}
-      <nav style={{ background: NAVY, padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, height: 64 }}>
-        <a href="/" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: '#fff' }}>
-          Reclama<span style={{ color: GREEN }}>Vuelo</span>
-        </a>
-        <div className="hide-mobile" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          <a href="#como" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500 }}>Cómo funciona</a>
-          <a href="#servicios" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500 }}>Servicios</a>
-        </div>
-        <a href="#form" style={{
-          background: GREEN, color: '#fff', padding: '9px 20px', borderRadius: 8,
-          fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13,
-        }}>Reclamar ahora</a>
-      </nav>
+      <style>{globalStyles}</style>
+      <Nav />
 
       {/* ── HERO ── */}
       <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2356 50%, ${NAVY} 100%)`, padding: '80px 24px 96px', textAlign: 'center' }}>
@@ -897,42 +861,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ background: NAVY, borderTop: '1px solid rgba(255,255,255,0.08)', padding: '40px 24px 32px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 32, marginBottom: 32 }}>
-            <div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#fff', marginBottom: 8 }}>
-                Reclama<span style={{ color: GREEN }}>Vuelo</span>
-              </div>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, maxWidth: 240, lineHeight: 1.6 }}>
-                Reclamaciones aéreas bajo el Reglamento CE 261/2004. Sin costes iniciales.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Legal</div>
-                {['Aviso legal', 'Política de privacidad', 'Política de cookies'].map(l => (
-                  <div key={l} style={{ marginBottom: 8 }}>
-                    <a href="#" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{l}</a>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Contacto</div>
-                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 8 }}>info@reclamavuelo.com</div>
-                <a href="#form" style={{ display: 'inline-block', background: GREEN, color: '#fff', padding: '8px 18px', borderRadius: 7, fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12, marginTop: 4 }}>
-                  Reclamar ahora
-                </a>
-              </div>
-            </div>
-          </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>© {new Date().getFullYear()} ReclamaVuelo. Todos los derechos reservados.</p>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Reglamento CE 261/2004 · LOPD/RGPD</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* ── HIDDEN FORMSUBMIT FORM ── */}
       <form id="hiddenForm" action="https://formsubmit.co/guilletruan@gmail.com" method="POST" style={{ display: 'none' }}>
