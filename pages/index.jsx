@@ -358,9 +358,10 @@ export default function Home() {
         body: JSON.stringify({ incidentType, demoMode: false, ...form }),
       });
       const data = await res.json();
-      setResult(data);
+      if (!res.ok) setResult({ error: data.detail || data.error || 'Error interno del servidor' });
+      else setResult(data);
     } catch (e) {
-      setResult({ error: 'Error de conexión. Inténtalo de nuevo.' });
+      setResult({ error: e.message || 'Error de conexión. Inténtalo de nuevo.' });
     } finally {
       setVerifying(false);
     }

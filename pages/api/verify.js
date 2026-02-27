@@ -128,7 +128,7 @@ export default async function handler(req, res) {
 
     let uploadUrl = null;
 
-    if (shouldEmail && process.env.RESEND_API_KEY) {
+    if (shouldEmail && process.env.RESEND_API_KEY && email) {
       const ref = 'RV-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 90000 + 10000);
 
       // Token con datos del caso para la página de subida
@@ -198,7 +198,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error en /api/verify:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', detail: error.message });
+    return res.status(500).json({ error: 'Error interno del servidor', detail: error.message, stack: error.stack?.split('\n').slice(0,3).join(' | ') });
   }
 }
 
