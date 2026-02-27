@@ -132,7 +132,7 @@ export default function Home() {
   const [form, setForm]           = useState({
     flightNumber: '', date: '', origin: '', destination: '', airline: '',
     flightNumber2: '', samePNR: true, finalDestination: '',
-    alternativeOffered: false, alternativeArrival: '', cancellationNotice: '',
+    alternativeOffered: false, alternativeAccepted: '', alternativeArrival: '', cancellationNotice: '',
     airportCompensation: false,
     firstName: '', lastName: '', docNumber: '', phone: '', email: '',
     passengers: '1', comments: '',
@@ -450,10 +450,24 @@ export default function Home() {
                       </Select>
                     </Field>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: form.alternativeOffered ? 14 : 0 }}>
                     <input type="checkbox" id="altOff" checked={form.alternativeOffered} onChange={e => set('alternativeOffered', e.target.checked)} style={{ width: 16, height: 16 }} />
                     <label htmlFor="altOff" style={{ fontSize: 13, color: '#334155', cursor: 'pointer' }}>La aerolínea me ofreció un vuelo alternativo</label>
                   </div>
+                  {form.alternativeOffered && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
+                      <Field label="¿Aceptaste el vuelo alternativo?">
+                        <Select value={form.alternativeAccepted ?? ''} onChange={e => set('alternativeAccepted', e.target.value)}>
+                          <option value="">Selecciona...</option>
+                          <option value="yes">Sí, lo acepté</option>
+                          <option value="no">No, lo rechacé</option>
+                        </Select>
+                      </Field>
+                      <Field label="Hora de llegada del alternativo" hint="Fecha y hora real de llegada">
+                        <Input type="datetime-local" value={form.alternativeArrival} onChange={e => set('alternativeArrival', e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
                 </div>
               )}
 

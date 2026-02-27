@@ -1,7 +1,7 @@
 // pages/api/verify.js
 // Endpoint principal: recibe datos del formulario, consulta APIs y devuelve decisión
 
-import { getFlightStatus, parseFlightNumber } from '../../lib/flightstats';
+import { getFlightStatus, parseFlightNumber } from '../../lib/aviationstack';
 import { getMetars, analyzeMetars }           from '../../lib/metar';
 import { analyzeClaimWithClaude }             from '../../lib/agent';
 
@@ -40,6 +40,7 @@ export default async function handler(req, res) {
     finalDestination,
     // Cancelación
     alternativeOffered,
+    alternativeAccepted,
     alternativeArrival,
     cancellationNotice,
     // Overbooking
@@ -59,7 +60,7 @@ export default async function handler(req, res) {
     let metarAnalysis = null;
 
     // ── MODO DEMO (sin API keys reales) ─────────────────────────────────
-    if (demoMode || !process.env.FLIGHTSTATS_APP_ID || process.env.FLIGHTSTATS_APP_ID === 'tu_app_id_aqui') {
+    if (demoMode || !process.env.AVIATIONSTACK_API_KEY || process.env.AVIATIONSTACK_API_KEY === 'tu_aviationstack_key_aqui') {
       flightStatus  = buildDemoFlightStatus(incidentType, flightNumber, origin, destination);
       flightStatus2 = flightNumber2 ? buildDemoFlightStatus('delay', flightNumber2, destination, finalDestination) : null;
       metarAnalysis = { available: false, adverseFound: false, conditions: [], summary: 'Modo demo: datos meteorológicos simulados. Sin condiciones adversas.' };
@@ -101,7 +102,7 @@ export default async function handler(req, res) {
     // ── AGENTE CLAUDE ────────────────────────────────────────────────────
     const claimData = {
       incidentType,
-      flightData: { flightNumber, date, origin, destination, airline, flightNumber2, samePNR, finalDestination, alternativeOffered, alternativeArrival, cancellationNotice, airportCompensation },
+      flightData: { flightNumber, date, origin, destination, airline, flightNumber2, samePNR, finalDestination, alternativeOffered, alternativeAccepted, alternativeArrival, cancellationNotice, airportCompensation },
       flightStatus,
       flightStatus2,
       metarAnalysis,
@@ -120,7 +121,7 @@ export default async function handler(req, res) {
       flightStatus,
       metarAnalysis,
       decision:     agentResult,
-      demoMode:     !process.env.FLIGHTSTATS_APP_ID || process.env.FLIGHTSTATS_APP_ID === 'tu_app_id_aqui',
+      demoMode:     !process.env.AVIATIONSTACK_API_KEY || process.env.AVIATIONSTACK_API_KEY === 'tu_aviationstack_key_aqui',
     });
 
   } catch (error) {
