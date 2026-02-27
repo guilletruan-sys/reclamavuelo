@@ -46,6 +46,12 @@ export default async function handler(req, res) {
     cancellationNotice,
     // Overbooking
     airportCompensation,
+    // Datos personales
+    firstName,
+    lastName,
+    email,
+    phone,
+    passengers,
     // Demo mode
     demoMode,
   } = req.body;
@@ -128,15 +134,15 @@ export default async function handler(req, res) {
       // Token con datos del caso para la página de subida
       const casePayload = {
         ref,
-        nombre:       `${flightData.firstName || ''} ${flightData.lastName || ''}`.trim() || 'Pasajero',
-        email:        flightData.email || '',
-        telefono:     flightData.phone || '',
-        vuelo:        flightData.flightNumber,
-        fecha:        flightData.date,
-        ruta:         `${flightData.origin} → ${flightData.destination}`,
+        nombre:       `${firstName || ''} ${lastName || ''}`.trim() || 'Pasajero',
+        email:        email || '',
+        telefono:     phone || '',
+        vuelo:        flightNumber,
+        fecha:        date,
+        ruta:         `${origin} → ${destination}`,
         incidentType,
         compensacion: agentResult.compensacion_estimada,
-        pasajeros:    flightData.passengers || '1',
+        pasajeros:    passengers || '1',
         decision:     agentResult.decision,
         razonamiento: agentResult.razonamiento_interno,
       };
