@@ -1,0 +1,282 @@
+FLUJO COMPLETO — ReclamaTuVuelo
+
+  ---
+  1. ENTRADA Y FORMULARIO
+
+  Usuario llega a reclamatuvuelo.com
+              │
+              ▼
+      [Landing page]
+      Hero → Cómo funciona → Servicios
+              │
+              ▼
+      Click "Reclamar ahora"
+              │
+              ▼
+  ┌─────────────────────────────┐
+  │  PASO 1 — Tipo de incidencia│
+  │  ○ Retraso                  │
+  │  ○ Cancelación              │
+  │  ○ Conexión perdida         │
+  │  ○ Overbooking              │
+  └─────────────────────────────┘
+              │
+              ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │  PASO 2 — Datos del vuelo                                   │
+  │  Compañía → autorellena código en nº vuelo                  │
+  │  Nº vuelo / Fecha / Origen (IATA) / Destino (IATA)         │
+  │                                                             │
+  │  Si CANCELACIÓN:                                            │
+  │    ¿Cuándo avisaron? (mismo día / 1-7d / 7-14d / +14d)    │
+  │    ¿Ofrecieron alternativa? → Sí → ¿Aceptaste? + hora arr │
+  │                                                             │
+  │  Si CONEXIÓN:                                               │
+  │    Nº vuelo 2 / Destino final / ¿Mismo PNR?               │
+  │                                                             │
+  │  Si OVERBOOKING:                                            │
+  │    ¿Ofrecieron compensación en aeropuerto?                  │
+  └─────────────────────────────────────────────────────────────┘
+              │
+              ▼
+      [Verificar vuelo con IA]
+
+  ---
+  2. VERIFICACIÓN AUTOMÁTICA (/api/verify)
+
+              │
+              ├──► AviationStack ──► Estado real del vuelo
+              │                      (retraso, cancelado, hora salida/llegada)
+              │
+              ├──► METAR (NOAA) ──► Condiciones meteorológicas
+              │                      en aeropuerto de origen
+              │
+              └──► Claude (CE 261/2004) ──► Decisión
+
+  ---
+  3. ÁRBOL DE DECISIÓN CE 261/2004
+
+                      ┌─────────────┐
+                      │   RETRASO   │
+                      └─────────────┘
+                            │
+                ┌───────────▼───────────┐
+                │  ¿Llegada destino     │
+                │    ≥ 3 horas?         │
+                └───────────────────────┘
+                 NO ▼              SÍ ▼
+            NO_RECLAMABLE    ┌─────────────────────┐
+                             │ ¿Circunstancia       │
+                             │ extraordinaria?      │
+                             │ (METAR confirma      │
+                             │  meteorología severa,│
+                             │  huelga externa,     │
+                             │  ATC Eurocontrol)    │
+                             └─────────────────────┘
+                              SÍ ▼         NO ▼
+                         NO_RECLAMABLE   RECLAMABLE
+                                             │
+                                ┌────────────▼────────────┐
+                                │  Distancia total ruta   │
+                                ├─────────────────────────┤
+                                │ ≤ 1.500 km  →  250 €   │
+                                │ 1.500-3.500 km → 400 € │
+                                │ > 3.500 km  →  600 €   │
+                                └─────────────────────────┘
+
+
+                    ┌──────────────────┐
+                    │   CANCELACIÓN    │
+                    └──────────────────┘
+                            │
+            ┌───────────────▼───────────────┐
+            │  ¿Aviso con más de 14 días?   │
+            └───────────────────────────────┘
+             SÍ ▼                    NO ▼
+         NO_RECLAMABLE    ┌────────────────────────┐
+                          │ ¿Circunstancia         │
+                          │ extraordinaria?        │
+                          └────────────────────────┘
+                           SÍ ▼          NO ▼
+                      NO_RECLAMABLE  ¿Alternativa ofrecida?
+                                      │
+                          NO ▼                  SÍ ▼
+                      RECLAMABLE 100%     ¿Llegó a tiempo?
+                                          (≤1.500km: <2h)
+                                          (1.500-3.500: <3h)
+                                          (>3.500km: <4h)
+                                          │
+                                  SÍ ▼          NO ▼
+                            RECLAMABLE 50%  RECLAMABLE 100%
+
+
+                ┌──────────────────────┐
+                │   CONEXIÓN PERDIDA   │
+                └──────────────────────┘
+                            │
+                ┌───────────▼──────────┐
+                │  ¿Mismo PNR          │
+                │  (misma reserva)?    │
+                └──────────────────────┘
+                 NO ▼             SÍ ▼
+            NO_RECLAMABLE   ¿Retraso en destino
+                            final ≥ 3 horas?
+                             NO ▼       SÍ ▼
+                        NO_RECLAMABLE  RECLAMABLE
+                                      (distancia
+                                     origen→final)
+
+
+                    ┌──────────────┐
+                    │  OVERBOOKING │
+                    └──────────────┘
+                            │
+            ┌───────────────▼──────────────┐
+            │  ¿Denegación voluntaria      │
+            │  (te ofrecieron compensar    │
+            │  y aceptaste quedarte)?      │
+            └──────────────────────────────┘
+             SÍ ▼                    NO ▼
+         REVISAR                  RECLAMABLE
+         (depende de              (siempre salvo
+         lo acordado)              fuerza mayor)
+
+  ---
+  4. RESULTADO Y EMAILS
+
+             ┌────────────────────────────────────┐
+             │          RESULTADO CLAUDE           │
+             └────────────────────────────────────┘
+                             │
+            ┌────────────────┼───────────────────┐
+            ▼                ▼                   ▼
+      RECLAMABLE      REVISAR_MANUALMENTE   NO_RECLAMABLE
+            │                │                   │
+            └────────┬────────┘                  ▼
+                     ▼                    Mostrar motivo
+           Mostrar compensación           FIN (no emails)
+           estimada + factores
+                     │
+                     ▼
+      ┌──────────────────────────────┐
+      │  [Iniciar reclamación →]     │
+      └──────────────────────────────┘
+                     │
+                     ▼
+           PASO 3 — Datos personales
+           Nombre / DNI / Teléfono /
+           Email / Nº pasajeros
+                     │
+                     ▼
+      ┌──────────────────────────────────────────┐
+      │           Resend dispara 2 emails         │
+      ├──────────────────────────────────────────┤
+      │  → USUARIO: "Caso recibido"              │
+      │    · Resumen del caso                    │
+      │    · Compensación estimada               │
+      │    · Link único para subir documentos    │
+      │    · Lista de docs necesarios            │
+      │                                          │
+      │  → EQUIPO (guilletruan@gmail.com):       │
+      │    · Todos los datos del caso            │
+      │    · Razonamiento IA                     │
+      │    · Link a página de docs del cliente   │
+      └──────────────────────────────────────────┘
+
+  ---
+  5. APORTACIÓN DE DOCUMENTOS
+
+      Usuario recibe email → click en link único
+                │
+                ▼
+      /aportar-documentos?d=<token_base64>
+      (token contiene todos los datos del caso)
+                │
+                ▼
+      ┌─────────────────────────────────┐
+      │  Subida de documentos           │
+      ├─────────────────────────────────┤
+      │  🪪 DNI/Pasaporte   OBLIGATORIO │
+      │  🎫 Tarjeta embarque OBLIGATORIO│
+      │  📧 Confirmación    OBLIGATORIO │
+      │  🏦 IBAN            OBLIGATORIO │
+      │  🧾 Gastos extras   opcional    │
+      └─────────────────────────────────┘
+                │
+                ▼
+           [Enviar documentación]
+
+  ---
+  6. VALIDACIÓN CON CLAUDE VISION (/api/upload-docs)
+
+      Por cada documento subido:
+      ┌───────────────────────────────────────────┐
+      │  Claude Vision analiza:                   │
+      │  · ¿Es el documento que dice ser?         │
+      │  · ¿Es legible y está completo?           │
+      │  · ¿Datos coherentes con el caso?         │
+      │    (nombre, vuelo, fecha, ruta)           │
+      │  · Extrae datos clave                     │
+      └───────────────────────────────────────────┘
+                │
+      ┌─────────┴──────────┐
+      ▼                    ▼
+  TODOS OK          ALGUNO FALLA
+      │                    │
+      ▼                    ▼
+  Email usuario:     Email usuario:
+  "Docs validados"   "Corrige estos
+  Ya gestionamos     documentos + detalle"
+  tu reclamación          │
+      │              Usuario corrige
+      ▼              y vuelve a subir
+  Email equipo:
+  "EXPEDIENTE LISTO
+   PARA KMALEON"
+  (ficha estructurada
+   con todos los datos)
+
+  ---
+  7. ALTA EN KMALEON
+
+      Equipo recibe email estructurado:
+      ┌───────────────────────────────────────┐
+      │  EXPEDIENTE KMALEON                   │
+      │  · Referencia: RV-2026-XXXXX         │
+      │  · Cliente: nombre, DNI, email, tel  │
+      │  · Vuelo: nº, fecha, ruta            │
+      │  · Tipo: retraso/cancelación/etc.    │
+      │  · Compensación: 400€ × 2 pax = 800€│
+      │  · Docs: ✅ todos validados          │
+      │  · Razonamiento IA                   │
+      └───────────────────────────────────────┘
+                │
+                ▼
+      Alta manual en Kmaleon       ← AHORA
+                │
+                ▼
+      Alta automática via API      ← FUTURO
+      (cuando Wolters Kluwer
+       facilite acceso API)
+
+  ---
+  RESUMEN DE ESTADOS DE UN CASO
+
+  NUEVO → ANALIZANDO → RECLAMABLE / NO_RECLAMABLE
+               │
+           RECLAMABLE
+               │
+          DOCS_PENDIENTES
+               │
+          DOCS_RECIBIDOS → VALIDANDO
+               │
+           DOCS_OK / DOCS_KO
+               │
+           EXPEDIENTE_KMALEON
+               │
+           RECLAMACIÓN_ENVIADA (aerolínea)
+               │
+          ┌────┴────┐
+       GANADO    JUDICIAL
+          │          │
+      COBRADO    (pendiente)
