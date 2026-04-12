@@ -1,266 +1,166 @@
-// pages/aportar-documentos.jsx
-// Página de subida de documentos — acceso únicamente vía link del email
-import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
-import { GREEN, NAVY, LIGHT_G, globalStyles, inputStyle } from '../lib/theme';
+import { tokens } from '../lib/theme';
+import { Button } from '../components/ui';
+import CaseSummary from '../components/docs/CaseSummary';
+import DocSlot from '../components/docs/DocSlot';
+import IbanInput from '../components/docs/IbanInput';
 
-const DOCS_NEEDED = [
-  { tipo: 'dni',      icon: '🪪', label: 'DNI o Pasaporte',         desc: 'Ambas caras. Debe estar en vigor en la fecha del vuelo.', accept: 'image/*,.pdf', required: true },
-  { tipo: 'embarque', icon: '🎫', label: 'Tarjeta de embarque',      desc: 'Física o digital. PDF, foto o captura de pantalla.', accept: 'image/*,.pdf', required: true },
-  { tipo: 'reserva',  icon: '📧', label: 'Confirmación de reserva',  desc: 'Email de confirmación o e-ticket de la aerolínea.', accept: 'image/*,.pdf', required: true },
-  { tipo: 'iban',     icon: '🏦', label: 'Número de cuenta (IBAN)',  desc: 'Cualquier documento que muestre tu IBAN completo.', accept: 'image/*,.pdf', required: true },
-  { tipo: 'gastos',   icon: '🧾', label: 'Gastos adicionales',       desc: 'Recibos de hotel, comida o transporte si los hubo.', accept: 'image/*,.pdf', required: false },
+function parseToken(d) {
+  try { return JSON.parse(atob(decodeURIComponent(d))); }
+  catch { return null; }
+}
+
+const BASE_DOCS = [
+  { id: 'dni',      icon: '🪪', label: 'DNI / Pasaporte',   hint: 'Foto clara de ambas caras', required: true },
+  { id: 'boarding', icon: '🎫', label: 'Tarjeta de embarque', hint: 'La original con el código de barras', required: true },
+  { id: 'booking',  icon: '📧', label: 'Confirmación de reserva', hint: 'Email o PDF con número de localizador', required: true },
 ];
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload  = () => {
-      const result = reader.result;
-      const base64 = result.split(',')[1];
-      resolve({ base64, mimeType: file.type });
-    };
-    reader.onerror = reject;
-  });
-}
+// IBAN se renderiza como input, no como upload
+const OPTIONAL_DOCS = [
+  { id: 'receipts', icon: '🧾', label: 'Recibos de gastos extras', hint: 'Comidas, hotel, transporte alternativo', required: false },
+];
+
+const TIPO_EXTRA_DOCS = {
+  equipaje: [{ id: 'pir', icon: '🧳', label: 'PIR (parte de irregularidad)', hint: 'Documento que te dieron al denunciar el equipaje en el aeropuerto', required: true }],
+  lesiones: [{ id: 'medical', icon: '🏥', label: 'Parte médico', hint: 'Informe del hospital o médico que te atendió', required: true }],
+};
 
 export default function AportarDocumentos() {
   const router = useRouter();
   const [caseData, setCaseData] = useState(null);
-  const [files, setFiles]       = useState({});
-  const [loading, setLoading]   = useState(false);
-  const [result, setResult]     = useState(null);
-  const [error, setError]       = useState('');
+  const [files, setFiles] = useState({}); // id -> { file, status, error }
+  const [iban, setIban] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const { d } = router.query;
-    if (!d) return;
-    try {
-      const decoded = JSON.parse(Buffer.from(d, 'base64').toString('utf-8'));
-      setCaseData(decoded);
-    } catch {
-      setError('Enlace inválido. Usa el enlace que te enviamos por email.');
+    if (router.query.d) {
+      const data = parseToken(router.query.d);
+      if (data) setCaseData(data);
     }
-  }, [router.query]);
+  }, [router.query.d]);
 
-  function handleFile(tipo, file) {
-    if (!file) return;
-    setFiles(prev => ({ ...prev, [tipo]: file }));
-  }
+  const tipo = caseData?.tipo;
+  const docs = useMemo(() => [...BASE_DOCS, ...(TIPO_EXTRA_DOCS[tipo] || []), ...OPTIONAL_DOCS], [tipo]);
 
-  async function handleSubmit() {
-    const requiredMissing = DOCS_NEEDED.filter(d => d.required && !files[d.tipo]);
-    if (requiredMissing.length > 0) {
-      alert(`Faltan documentos obligatorios: ${requiredMissing.map(d => d.label).join(', ')}`);
-      return;
-    }
-    if (!caseData) return;
+  const validDocsCount = docs.filter(d => files[d.id]?.status === 'ok').length;
+  const requiredCount = docs.filter(d => d.required).length;
+  const allRequiredOk = docs.filter(d => d.required).every(d => files[d.id]?.status === 'ok');
+  const canSubmit = allRequiredOk && iban && !submitting;
 
-    setLoading(true);
-    setError('');
-
+  const handleFile = async (docId, file) => {
+    setFiles(prev => ({ ...prev, [docId]: { file, status: 'uploading' } }));
     try {
-      // Convert files to base64
-      const filesPayload = [];
-      for (const doc of DOCS_NEEDED) {
-        if (files[doc.tipo]) {
-          const { base64, mimeType } = await fileToBase64(files[doc.tipo]);
-          filesPayload.push({ tipo: doc.tipo, base64, mimeType });
-        }
-      }
+      const b64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      setFiles(prev => ({ ...prev, [docId]: { file, status: 'validating' } }));
 
       const res = await fetch('/api/upload-docs', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ caseData, files: filesPayload }),
+        body: JSON.stringify({ validateOnly: true, docType: docId, dataUrl: b64, caseData }),
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al procesar los documentos');
-      setResult(data);
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Documento rechazado');
+      setFiles(prev => ({ ...prev, [docId]: { file, status: 'ok' } }));
     } catch (e) {
-      setError(e.message || 'Error de conexión. Inténtalo de nuevo.');
-    } finally {
-      setLoading(false);
+      setFiles(prev => ({ ...prev, [docId]: { file, status: 'error', error: e.message } }));
     }
-  }
+  };
 
-  const allOk = result?.validaciones?.every(v => v.ok);
+  const onSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const payload = {
+        caseData, iban,
+        files: Object.fromEntries(
+          await Promise.all(Object.entries(files).filter(([_, f]) => f.status === 'ok').map(async ([id, f]) => {
+            const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f.file); });
+            return [id, { name: f.file.name, dataUrl: b64 }];
+          }))
+        ),
+      };
+      const res = await fetch('/api/upload-docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Error al enviar documentación');
+      setSubmitted(true);
+    } catch (e) {
+      alert(e.message);
+    } finally { setSubmitting(false); }
+  };
 
   return (
     <>
-      <Head>
-        <title>Aportar documentación — ReclamaVuelo</title>
-        <meta name="robots" content="noindex" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-      </Head>
-      <style>{globalStyles}</style>
+      <Head><title>Subir documentos — ReclamaVuelo</title></Head>
       <Nav />
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: `${tokens.s7}px ${tokens.s5}px` }}>
+        {submitted ? (
+          <div style={{ textAlign: 'center', padding: tokens.s8 }} className="fade-up">
+            <div style={{
+              width: 96, height: 96, borderRadius: tokens.rPill,
+              background: tokens.green100, color: tokens.green600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto', fontSize: 48,
+            }}>✓</div>
+            <h1 style={{ fontFamily: tokens.fontHead, fontSize: 32, marginTop: tokens.s4 }}>Documentación enviada</h1>
+            <p style={{ color: tokens.slate500, marginTop: tokens.s3, maxWidth: 480, margin: `${tokens.s3}px auto 0` }}>
+              Hemos recibido todo. Nuestro equipo revisará los documentos y te avisaremos cuando iniciemos la reclamación con la aerolínea.
+            </p>
+          </div>
+        ) : (
+          <>
+            <h1 style={{ fontFamily: tokens.fontHead, fontSize: 32, fontWeight: 800, marginBottom: tokens.s2 }}>
+              Sube tus documentos
+            </h1>
+            <p style={{ color: tokens.slate500, fontSize: 16, marginBottom: tokens.s5 }}>
+              Necesitamos estos documentos para iniciar tu reclamación. Tardas 2-3 minutos.
+            </p>
 
-      <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2356 100%)`, padding: '56px 24px', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,4vw,2.2rem)', color: '#fff', marginBottom: 12 }}>
-          Aporta tu documentación
-        </h1>
-        {caseData && (
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15 }}>
-            Caso <strong style={{ color: GREEN }}>{caseData.ref}</strong> · {caseData.nombre} · {caseData.vuelo}
-          </p>
+            <CaseSummary caseData={caseData} />
+
+            <div style={{
+              background: tokens.slate100, borderRadius: tokens.r1,
+              padding: `${tokens.s2}px ${tokens.s3}px`, fontSize: 13, color: tokens.slate500,
+              marginBottom: tokens.s4, fontWeight: 600,
+            }}>{validDocsCount} de {requiredCount} documentos obligatorios subidos</div>
+
+            {docs.map(d => (
+              <DocSlot
+                key={d.id}
+                {...d}
+                file={files[d.id]?.file}
+                status={files[d.id]?.status}
+                error={files[d.id]?.error}
+                onFile={f => handleFile(d.id, f)}
+              />
+            ))}
+
+            <IbanInput value={iban} onChange={setIban} />
+
+            <Button
+              variant="primary"
+              size="lg"
+              disabled={!canSubmit}
+              onClick={onSubmit}
+              style={{ width: '100%', marginTop: tokens.s4 }}
+            >
+              {submitting ? 'Enviando…' : 'Enviar documentación →'}
+            </Button>
+          </>
         )}
-      </div>
-
-      <div style={{ background: '#f0f9f4', padding: '56px 24px 80px' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-
-          {error && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: 10, padding: '14px 16px', color: '#7f1d1d', fontSize: 14, marginBottom: 24 }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          {!caseData && !error && (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: '#64748b' }}>
-              Cargando datos del caso...
-            </div>
-          )}
-
-          {caseData && !result && (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-              <div style={{ marginBottom: 28, padding: '16px', background: LIGHT_G, borderRadius: 10, borderLeft: `3px solid ${GREEN}` }}>
-                <p style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                  <strong>Sube los documentos en cualquier formato</strong> (foto, PDF, captura de pantalla).
-                  Asegúrate de que sean legibles y que toda la información sea visible.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {DOCS_NEEDED.map(doc => (
-                  <div key={doc.tipo} style={{
-                    border: `1.5px solid ${files[doc.tipo] ? GREEN : '#e2e8f0'}`,
-                    borderRadius: 12, padding: '18px 20px',
-                    background: files[doc.tipo] ? LIGHT_G : '#fff',
-                    transition: 'all 0.2s',
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 20 }}>{doc.icon}</span>
-                          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>{doc.label}</span>
-                          {doc.required
-                            ? <span style={{ fontSize: 10, color: '#ef4444', fontWeight: 700 }}>OBLIGATORIO</span>
-                            : <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>OPCIONAL</span>
-                          }
-                        </div>
-                        <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{doc.desc}</p>
-                        {files[doc.tipo] && (
-                          <p style={{ fontSize: 12, color: GREEN, margin: '6px 0 0', fontWeight: 600 }}>
-                            ✓ {files[doc.tipo].name}
-                          </p>
-                        )}
-                      </div>
-                      <label style={{
-                        display: 'inline-block', cursor: 'pointer',
-                        background: files[doc.tipo] ? GREEN : 'transparent',
-                        color: files[doc.tipo] ? '#fff' : GREEN,
-                        border: `1.5px solid ${GREEN}`,
-                        padding: '8px 16px', borderRadius: 8,
-                        fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {files[doc.tipo] ? 'Cambiar' : 'Subir archivo'}
-                        <input
-                          type="file"
-                          accept={doc.accept}
-                          style={{ display: 'none' }}
-                          onChange={e => handleFile(doc.tipo, e.target.files?.[0])}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                style={{
-                  marginTop: 28, width: '100%', background: loading ? '#94a3b8' : GREEN,
-                  color: '#fff', border: 'none', borderRadius: 10, padding: '14px 24px',
-                  fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16,
-                  cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-                }}
-              >
-                {loading ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <span style={{ width: 18, height: 18, border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
-                    Validando documentos con IA...
-                  </span>
-                ) : 'Enviar documentación →'}
-              </button>
-
-              <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', marginTop: 12 }}>
-                🔒 Tus documentos se procesan de forma segura y cifrada.
-              </p>
-            </div>
-          )}
-
-          {result && (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: allOk ? `linear-gradient(135deg, ${GREEN}, #059669)` : 'linear-gradient(135deg, #f59e0b, #d97706)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 30, margin: '0 auto 20px', color: '#fff',
-                boxShadow: allOk ? '0 8px 24px rgba(16,185,129,0.3)' : '0 8px 24px rgba(245,158,11,0.3)',
-              }}>
-                {allOk ? '✓' : '!'}
-              </div>
-
-              <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: allOk ? GREEN : '#f59e0b', marginBottom: 10 }}>
-                {allOk ? 'Documentación validada' : 'Revisa algunos documentos'}
-              </h2>
-              <p style={{ color: '#64748b', fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-                {allOk
-                  ? 'Hemos recibido y validado toda tu documentación. Te hemos enviado un email de confirmación.'
-                  : 'Algunos documentos necesitan corrección. Revisa los puntos indicados y vuelve a subir los que tengan problemas.'}
-              </p>
-
-              <div style={{ textAlign: 'left', marginBottom: 24 }}>
-                {result.validaciones.map((v, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: 20 }}>{v.ok ? '✅' : '⚠️'}</span>
-                    <div>
-                      <strong style={{ fontSize: 14, color: NAVY }}>{v.nombre}</strong>
-                      <p style={{ fontSize: 13, color: v.ok ? '#10b981' : '#f59e0b', margin: '3px 0 0' }}>{v.mensaje}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {!allOk && (
-                <button onClick={() => setResult(null)} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-                  Volver a subir documentos
-                </button>
-              )}
-
-              {allOk && (
-                <div style={{ background: LIGHT_G, borderRadius: 10, padding: 16, textAlign: 'left' }}>
-                  <p style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                    <strong>¿Qué ocurre ahora?</strong><br />
-                    Nuestro equipo presentará la reclamación ante la aerolínea. Solo cobramos si tú cobras: 25%+IVA.
-                    Te avisaremos de cada novedad por email.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
+      </main>
       <Footer />
     </>
   );

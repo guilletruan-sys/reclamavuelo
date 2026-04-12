@@ -4,7 +4,6 @@
 import { getFlightStatus, parseFlightNumber }                      from '../../lib/aviationstack';
 import { getMetars, analyzeMetars }                               from '../../lib/metar';
 import { analyzeClaimWithClaude }                                 from '../../lib/agent';
-import { sendConfirmacionUsuario, sendNuevaReclamacionInterna }   from '../../lib/email';
 
 // Mapa IATA → ICAO para METARs (aeropuertos españoles y europeos más comunes)
 const IATA_TO_ICAO = {
@@ -46,12 +45,14 @@ export default async function handler(req, res) {
     cancellationNotice,
     // Overbooking
     airportCompensation,
-    // Datos personales
-    firstName,
-    lastName,
-    email,
-    phone,
-    passengers,
+    // Equipaje (Convenio de Montreal)
+    luggageType,
+    luggageValue,
+    pirDone,
+    // Lesiones (Convenio de Montreal)
+    injuryType,
+    medicalReport,
+    injuryDescription,
     // Demo mode
     demoMode,
   } = req.body;
@@ -75,17 +76,17 @@ export default async function handler(req, res) {
       // ── FLIGHTSTATS REAL ───────────────────────────────────────────────
       try {
         const parsed = parseFlightNumber(flightNumber);
-        flightStatus = await getFlightStatus(parsed.carrier, parsed.number, date);
+        flightStatus = await getFlightStatus(parsed.carrier, parsed.number, date, origin);
       } catch (e) {
         console.error('FlightStats error:', e.message);
         flightStatus = null;
       }
 
-      // Segundo vuelo si hay conexión
+      // Segundo vuelo si hay conexión (el origen del 2º es el destino del 1º)
       if (flightNumber2) {
         try {
           const parsed2 = parseFlightNumber(flightNumber2);
-          flightStatus2 = await getFlightStatus(parsed2.carrier, parsed2.number, date);
+          flightStatus2 = await getFlightStatus(parsed2.carrier, parsed2.number, date, destination);
         } catch (e) {
           console.error('FlightStats error vuelo 2:', e.message);
         }
@@ -109,7 +110,7 @@ export default async function handler(req, res) {
     // ── AGENTE CLAUDE ────────────────────────────────────────────────────
     const claimData = {
       incidentType,
-      flightData: { flightNumber, date, origin, destination, airline, flightNumber2, samePNR, finalDestination, alternativeOffered, alternativeAccepted, alternativeArrival, cancellationNotice, airportCompensation },
+      flightData: { flightNumber, date, origin, destination, airline, flightNumber2, samePNR, finalDestination, alternativeOffered, alternativeAccepted, alternativeArrival, cancellationNotice, airportCompensation, luggageType, luggageValue, pirDone, injuryType, medicalReport, injuryDescription },
       flightStatus,
       flightStatus2,
       metarAnalysis,
@@ -118,73 +119,9 @@ export default async function handler(req, res) {
     let agentResult;
     if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'tu_anthropic_key_aqui') {
       // Demo mode para Claude también
-      agentResult = buildDemoAgentResult(incidentType, flightStatus);
+      agentResult = buildDemoAgentResult(incidentType, flightStatus, claimData.flightData);
     } else {
       agentResult = await analyzeClaimWithClaude(claimData);
-    }
-
-    // ── EMAILS (solo si la decisión permite continuar) ────────────────────────
-    const shouldEmail = agentResult.decision === 'RECLAMABLE' || agentResult.decision === 'REVISAR_MANUALMENTE';
-
-    let uploadUrl = null;
-
-    if (shouldEmail && process.env.RESEND_API_KEY && email) {
-      const ref = 'RV-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 90000 + 10000);
-
-      // Token con datos del caso para la página de subida
-      const casePayload = {
-        ref,
-        nombre:       `${firstName || ''} ${lastName || ''}`.trim() || 'Pasajero',
-        email:        email || '',
-        telefono:     phone || '',
-        vuelo:        flightNumber,
-        fecha:        date,
-        ruta:         `${origin} → ${destination}`,
-        incidentType,
-        compensacion: agentResult.compensacion_estimada,
-        pasajeros:    passengers || '1',
-        decision:     agentResult.decision,
-        razonamiento: agentResult.razonamiento_interno,
-      };
-
-      const token = Buffer.from(JSON.stringify(casePayload)).toString('base64');
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://reclamavuelo.com';
-      uploadUrl = `${baseUrl}/aportar-documentos?d=${token}`;
-
-      try {
-        await Promise.all([
-          sendConfirmacionUsuario({
-            to:          casePayload.email,
-            nombre:      casePayload.nombre,
-            ref,
-            vuelo:       casePayload.vuelo,
-            ruta:        casePayload.ruta,
-            compensacion: casePayload.compensacion,
-            decision:    casePayload.decision,
-            uploadUrl,
-          }),
-          sendNuevaReclamacionInterna({
-            ref,
-            decision:     agentResult.decision,
-            confianza:    agentResult.confianza,
-            compensacion: agentResult.compensacion_estimada,
-            vuelo:        flightData.flightNumber,
-            ruta:         casePayload.ruta,
-            fecha:        flightData.date,
-            incidentType,
-            nombre:       casePayload.nombre,
-            email:        casePayload.email,
-            telefono:     casePayload.telefono,
-            pasajeros:    casePayload.pasajeros,
-            razonamiento: agentResult.razonamiento_interno,
-            factores:     agentResult.factores_clave,
-            uploadUrl,
-          }),
-        ]);
-      } catch (emailErr) {
-        console.error('Error enviando emails:', emailErr);
-        // No bloqueamos la respuesta si el email falla
-      }
     }
 
     return res.status(200).json({
@@ -192,13 +129,12 @@ export default async function handler(req, res) {
       flightStatus,
       metarAnalysis,
       decision:     agentResult,
-      uploadUrl,
       demoMode:     !process.env.AVIATIONSTACK_API_KEY || process.env.AVIATIONSTACK_API_KEY === 'tu_aviationstack_key_aqui',
     });
 
   } catch (error) {
     console.error('Error en /api/verify:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', detail: error.message, stack: error.stack?.split('\n').slice(0,3).join(' | ') });
+    return res.status(500).json({ error: 'Error interno del servidor', detail: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 }
 
@@ -225,7 +161,38 @@ function buildDemoFlightStatus(incidentType, flightNumber, origin, dest) {
   return { ...baseStatus, status: 'L', delayMinutes: 260, departed: '2024-11-15T12:30:00', arrived: '2024-11-15T17:05:00', scheduledDep: '2024-11-15T08:30:00', scheduledArr: '2024-11-15T12:45:00' };
 }
 
-function buildDemoAgentResult(incidentType, flightStatus) {
+function buildDemoAgentResult(incidentType, flightStatus, flightData = {}) {
+  if (incidentType === 'baggage') {
+    const pir = flightData.pirDone === 'yes';
+    const val = parseInt(flightData.luggageValue, 10) || 0;
+    return {
+      decision: 'REVISAR_MANUALMENTE',
+      confianza: pir ? 'ALTA' : 'MEDIA',
+      compensacion_estimada: pir && val > 0 ? Math.min(1600, val) : null,
+      resumen_usuario: pir
+        ? 'Tu caso de equipaje está cubierto por el Convenio de Montreal (límite máximo ~1.600€ por pasajero). El importe exacto depende de la documentación (facturas, fotos, PIR) y lo estimará nuestro equipo tras revisar los documentos.'
+        : 'Sin PIR la reclamación por equipaje es más complicada. Nuestro equipo revisará si aún hay vía alternativa y te contactará en 24h.',
+      razonamiento_interno: `Demo: equipaje ${flightData.luggageType || 'N/D'}, valor ${flightData.luggageValue || 'N/D'}€, PIR: ${flightData.pirDone || 'no'}. Convenio de Montreal.`,
+      factores_clave: ['Convenio de Montreal', pir ? 'PIR realizado' : 'Sin PIR'],
+      siguiente_paso: 'Aporta PIR, facturas y fotos. Nuestro equipo estimará la compensación.',
+      regulation: 'Convenio de Montreal',
+    };
+  }
+  if (incidentType === 'injury') {
+    const hasProof = flightData.medicalReport === 'yes';
+    return {
+      decision: 'REVISAR_MANUALMENTE',
+      confianza: hasProof ? 'ALTA' : 'MEDIA',
+      compensacion_estimada: null,
+      resumen_usuario: hasProof
+        ? 'Tu caso es reclamable bajo el art. 17.1 del Convenio de Montreal. Uno de nuestros abogados revisará el parte médico y te contactará para estimar la compensación.'
+        : 'Los casos de lesión requieren parte médico. Nuestro equipo se pondrá en contacto para orientarte.',
+      razonamiento_interno: `Demo: lesión ${flightData.injuryType || 'N/D'}. Parte médico: ${flightData.medicalReport || 'no'}. Convenio de Montreal art. 17.1.`,
+      factores_clave: ['Convenio de Montreal art. 17.1', hasProof ? 'Parte médico aportado' : 'Sin parte médico'],
+      siguiente_paso: hasProof ? 'Un abogado revisará el parte médico.' : 'Un abogado te orientará sobre cómo obtener el parte médico.',
+      regulation: 'Convenio de Montreal art. 17.1',
+    };
+  }
   if (incidentType === 'overbooking') {
     return { decision: 'RECLAMABLE', confianza: 'ALTA', compensacion_estimada: 400, resumen_usuario: 'La denegación de embarque (overbooking) es reclamable bajo el Reglamento CE 261/2004. Tienes derecho a compensación económica más reembolso o vuelo alternativo.', razonamiento_interno: 'Demo: overbooking sin causa de fuerza mayor documentada.', factores_clave: ['Overbooking confirmado', 'Sin exención aplicable'], siguiente_paso: 'Iniciamos la reclamación formal ante la aerolínea.' };
   }
