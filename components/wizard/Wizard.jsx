@@ -90,10 +90,15 @@ export default function Wizard() {
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Error al verificar');
-                // /api/verify devuelve { success, decision: {agentResult}, ... }
-                // desempaquetamos el agentResult para que Result.jsx lo use directo
+                // /api/verify devuelve { success, decision: {agentResult}, flightStatus, metarAnalysis, demoMode }
+                // Desempaquetamos agentResult pero preservamos el resto como metadata
                 const agentResult = data.decision || data;
-                setState(s => ({ ...s, flight, result: agentResult }));
+                const verifyMeta = {
+                  flightStatus:  data.flightStatus,
+                  metarAnalysis: data.metarAnalysis,
+                  demoMode:      data.demoMode,
+                };
+                setState(s => ({ ...s, flight, result: agentResult, verifyMeta }));
                 setStep(2.5);
               } catch (e) {
                 setError(e.message);
@@ -104,6 +109,7 @@ export default function Wizard() {
         {step === 2.5 && (
           <Result
             result={state.result}
+            verifyMeta={state.verifyMeta}
             tipo={state.tipo}
             onBack={() => setStep(2)}
             onContinue={() => setStep(3)}

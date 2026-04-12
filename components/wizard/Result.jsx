@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { tokens } from '../../lib/theme';
 import { Button, Badge } from '../ui';
 
-export default function Result({ result, tipo, onBack, onContinue }) {
+export default function Result({ result, verifyMeta, tipo, onBack, onContinue }) {
   const [showReasoning, setShowReasoning] = useState(false);
   if (!result) return null;
 
@@ -157,6 +157,72 @@ export default function Result({ result, tipo, onBack, onContinue }) {
           🐛 Debug · Cómo ha razonado la IA (temporal)
         </summary>
         <div style={{ marginTop: tokens.s3, fontSize: 13, lineHeight: 1.6, color: tokens.navy900 }}>
+          {/* ── Origen de los datos ─────────────────────────── */}
+          {verifyMeta && (() => {
+            const fs = verifyMeta.flightStatus;
+            const metar = verifyMeta.metarAnalysis;
+            const demo = verifyMeta.demoMode;
+
+            let dataSource, sourceColor, sourceExplanation;
+            if (demo) {
+              dataSource = '⚙️ MODO DEMO';
+              sourceColor = '#94a3b8';
+              sourceExplanation = 'AviationStack no está configurado. El backend usa datos ficticios hardcoded y Claude analiza sobre esos datos de demo.';
+            } else if (fs) {
+              dataSource = '✅ AVIATIONSTACK (datos reales verificados)';
+              sourceColor = '#10b981';
+              sourceExplanation = 'AviationStack confirmó el vuelo. Claude analizó cruzando los datos declarados por el pasajero con los datos operacionales reales.';
+            } else {
+              dataSource = '⚠️ SOLO DECLARACIÓN DEL PASAJERO';
+              sourceColor = '#f59e0b';
+              sourceExplanation = 'AviationStack NO devolvió datos del vuelo (normal si es un vuelo antiguo o el plan gratuito no lo encuentra). Claude confió en lo que declaró el pasajero en el formulario.';
+            }
+
+            return (
+              <div style={{
+                background: tokens.white, border: `2px solid ${sourceColor}`,
+                borderRadius: tokens.r1, padding: tokens.s3, marginBottom: tokens.s3,
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: sourceColor, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Origen de los datos del vuelo
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: tokens.navy900, marginBottom: 6 }}>
+                  {dataSource}
+                </div>
+                <div style={{ fontSize: 12, color: tokens.slate500, lineHeight: 1.5 }}>
+                  {sourceExplanation}
+                </div>
+
+                {fs && (
+                  <div style={{
+                    marginTop: tokens.s3, padding: tokens.s2,
+                    background: tokens.slate50, borderRadius: 6, fontSize: 12,
+                  }}>
+                    <div><strong>Estado:</strong> {fs.status} {fs.cancelled ? '(cancelado)' : ''} {fs.diverted ? '(desviado)' : ''}</div>
+                    <div><strong>Salida programada:</strong> {fs.scheduledDep || 'N/D'}</div>
+                    <div><strong>Salida real:</strong> {fs.departed || 'N/D'}</div>
+                    <div><strong>Llegada programada:</strong> {fs.scheduledArr || 'N/D'}</div>
+                    <div><strong>Llegada real:</strong> {fs.arrived || 'N/D'}</div>
+                    <div><strong>Retraso confirmado:</strong> {fs.delayMinutes != null ? fs.delayMinutes + ' min' : 'N/D'}</div>
+                    {fs.delayCodes?.length > 0 && <div><strong>Códigos de causa:</strong> {fs.delayCodes.join(', ')}</div>}
+                  </div>
+                )}
+
+                {metar && (metar.summary || metar.conditions?.length) && (
+                  <div style={{
+                    marginTop: tokens.s2, padding: tokens.s2,
+                    background: tokens.slate50, borderRadius: 6, fontSize: 12,
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>🌦 METAR (meteorología)</div>
+                    <div style={{ color: tokens.slate500 }}>{metar.summary || 'Sin resumen'}</div>
+                    {metar.adverseFound && <div style={{ color: tokens.red500, marginTop: 2, fontWeight: 600 }}>⚠ Condiciones adversas confirmadas</div>}
+                    {metar.conditions?.length > 0 && <div style={{ marginTop: 2 }}>Condiciones: {metar.conditions.join(', ')}</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           <div style={{ marginBottom: tokens.s3 }}>
             <strong style={{ color: '#92400e' }}>Decisión:</strong> {status}<br/>
             <strong style={{ color: '#92400e' }}>Confianza:</strong> {result.confianza || 'N/D'}<br/>
