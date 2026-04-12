@@ -76,17 +76,17 @@ export default async function handler(req, res) {
       // ── FLIGHTSTATS REAL ───────────────────────────────────────────────
       try {
         const parsed = parseFlightNumber(flightNumber);
-        flightStatus = await getFlightStatus(parsed.carrier, parsed.number, date);
+        flightStatus = await getFlightStatus(parsed.carrier, parsed.number, date, origin);
       } catch (e) {
         console.error('FlightStats error:', e.message);
         flightStatus = null;
       }
 
-      // Segundo vuelo si hay conexión
+      // Segundo vuelo si hay conexión (el origen del 2º es el destino del 1º)
       if (flightNumber2) {
         try {
           const parsed2 = parseFlightNumber(flightNumber2);
-          flightStatus2 = await getFlightStatus(parsed2.carrier, parsed2.number, date);
+          flightStatus2 = await getFlightStatus(parsed2.carrier, parsed2.number, date, destination);
         } catch (e) {
           console.error('FlightStats error vuelo 2:', e.message);
         }
