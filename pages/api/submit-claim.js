@@ -82,6 +82,7 @@ export default async function handler(req, res) {
             compensacion: aiDecision?.compensacion_estimada,
             decision: aiDecision?.decision,
             uploadUrl,
+            incidentType,
           }),
           sendNuevaReclamacionInterna({
             ref,
