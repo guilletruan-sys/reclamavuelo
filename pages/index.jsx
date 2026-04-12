@@ -11,7 +11,7 @@ import WhyUs from '../components/landing/WhyUs';
 import FAQ from '../components/landing/FAQ';
 import FinalCTA from '../components/landing/FinalCTA';
 // Wizard entry — en Fase 4 se reemplaza por el wizard real
-import WizardStub from '../components/landing/WizardStub';
+import Wizard from '../components/wizard/Wizard';
 
 export default function Home() {
   return (
@@ -27,7 +27,7 @@ export default function Home() {
         <Services />
         <HowItWorks />
         <Calculator />
-        <WizardStub />
+        <Wizard />
         <Pricing />
         <WhyUs />
         <FAQ />
