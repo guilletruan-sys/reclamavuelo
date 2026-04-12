@@ -34,9 +34,10 @@ export default function Step2Flight({ tipo, value, loading, error, onChange, onB
   };
 
   const onAirline = code => {
-    const cur = f.flightNumber.replace(/^[A-Z]{2}/, '');
-    set('airline', code);
-    set('flightNumber', code + cur);
+    const cur = (f.flightNumber || '').replace(/^[A-Z]{2}/, '');
+    const next = { ...f, airline: code, flightNumber: code + cur };
+    setF(next);
+    onChange(next);
   };
 
   const coreValid = f.airline && f.flightNumber && f.date && f.from && f.to && f.from !== f.to;
