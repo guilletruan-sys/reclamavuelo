@@ -1,4 +1,4 @@
-import { tokens, inputStyle, selectStyle } from '../../lib/theme';
+import { tokens, inputStyle, selectStyle } from '../lib/theme';
 
 export function Field({ label, children, hint, error }) {
   return (

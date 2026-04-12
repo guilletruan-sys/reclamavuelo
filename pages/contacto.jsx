@@ -3,7 +3,7 @@ import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 import { tokens } from '../lib/theme';
 import { Button, H1, Subtitle } from '../components/ui';
-import { Field, Input, Select } from '../components/wizard/fields';
+import { Field, Input, Select } from '../components/fields';
 
 export default function Contacto() {
   return (

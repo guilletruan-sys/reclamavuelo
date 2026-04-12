@@ -10,8 +10,7 @@ import Pricing from '../components/landing/Pricing';
 import WhyUs from '../components/landing/WhyUs';
 import FAQ from '../components/landing/FAQ';
 import FinalCTA from '../components/landing/FinalCTA';
-// Wizard entry — en Fase 4 se reemplaza por el wizard real
-import Wizard from '../components/wizard/Wizard';
+import Chat from '../components/chat/Chat';
 
 export default function Home() {
   return (
@@ -27,7 +26,7 @@ export default function Home() {
         <Services />
         <HowItWorks />
         <Calculator />
-        <Wizard />
+        <Chat />
         <Pricing />
         <WhyUs />
         <FAQ />

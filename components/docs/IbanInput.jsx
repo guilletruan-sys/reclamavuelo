@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '../../lib/theme';
-import { Field, Input } from '../wizard/fields';
+import { Field, Input } from '../fields';
 
 function validateIBAN(raw) {
   const s = raw.replace(/\s+/g, '').toUpperCase();
