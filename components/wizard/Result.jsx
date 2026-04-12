@@ -142,6 +142,70 @@ export default function Result({ result, tipo, onBack, onContinue }) {
         </div>
       )}
 
+      {/* ── DEBUG TEMPORAL: respuesta cruda del agente ──────────── */}
+      <details style={{
+        marginTop: tokens.s4,
+        background: '#fef3c7',
+        border: '2px dashed #f59e0b',
+        borderRadius: tokens.r2,
+        padding: tokens.s4,
+      }}>
+        <summary style={{
+          cursor: 'pointer', fontSize: 13, fontWeight: 700,
+          color: '#92400e', letterSpacing: '0.5px', textTransform: 'uppercase',
+        }}>
+          🐛 Debug · Cómo ha razonado la IA (temporal)
+        </summary>
+        <div style={{ marginTop: tokens.s3, fontSize: 13, lineHeight: 1.6, color: tokens.navy900 }}>
+          <div style={{ marginBottom: tokens.s3 }}>
+            <strong style={{ color: '#92400e' }}>Decisión:</strong> {status}<br/>
+            <strong style={{ color: '#92400e' }}>Confianza:</strong> {result.confianza || 'N/D'}<br/>
+            <strong style={{ color: '#92400e' }}>Compensación estimada:</strong> {amount ? amount + '€' : 'null'}<br/>
+            <strong style={{ color: '#92400e' }}>Regulación aplicada:</strong> {regulation}
+          </div>
+
+          {summary && (
+            <div style={{ marginBottom: tokens.s3 }}>
+              <strong style={{ color: '#92400e' }}>Resumen al usuario:</strong>
+              <div style={{ background: tokens.white, padding: tokens.s2, borderRadius: 6, marginTop: 4 }}>{summary}</div>
+            </div>
+          )}
+
+          {reasoning && (
+            <div style={{ marginBottom: tokens.s3 }}>
+              <strong style={{ color: '#92400e' }}>Razonamiento jurídico interno:</strong>
+              <div style={{ background: tokens.white, padding: tokens.s2, borderRadius: 6, marginTop: 4 }}>{reasoning}</div>
+            </div>
+          )}
+
+          {factors?.length > 0 && (
+            <div style={{ marginBottom: tokens.s3 }}>
+              <strong style={{ color: '#92400e' }}>Factores clave que ha considerado:</strong>
+              <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                {factors.map((f, i) => <li key={i} style={{ marginBottom: 2 }}>{f}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {nextStep && (
+            <div style={{ marginBottom: tokens.s3 }}>
+              <strong style={{ color: '#92400e' }}>Siguiente paso recomendado:</strong>
+              <div style={{ background: tokens.white, padding: tokens.s2, borderRadius: 6, marginTop: 4 }}>{nextStep}</div>
+            </div>
+          )}
+
+          <div>
+            <strong style={{ color: '#92400e' }}>Respuesta cruda del backend (JSON):</strong>
+            <pre style={{
+              background: '#1e293b', color: '#e2e8f0',
+              padding: tokens.s3, borderRadius: 6, marginTop: 4,
+              fontSize: 11, lineHeight: 1.4,
+              overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            }}>{JSON.stringify(result, null, 2)}</pre>
+          </div>
+        </div>
+      </details>
+
       {/* ── Botones ────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: tokens.s3, marginTop: tokens.s5 }}>
         <Button variant="ghost" onClick={onBack}>← Modificar datos</Button>
