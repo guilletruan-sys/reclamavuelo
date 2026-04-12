@@ -31,7 +31,7 @@ export default function Step3Contact({ value, result, flight, tipo, onChange, on
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error enviando el caso');
-      onSubmitted(data);
+      onSubmitted(data); // data.ref + data.uploadUrl para el Step 4
     } catch (e) {
       setError(e.message);
     } finally { setLoading(false); }

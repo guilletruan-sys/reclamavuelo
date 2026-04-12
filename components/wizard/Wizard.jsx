@@ -5,6 +5,7 @@ import ProgressBar from './ProgressBar';
 import Step1Type from './Step1Type';
 import Step2Flight from './Step2Flight';
 import Step3Contact from './Step3Contact';
+import Step4Documents from './Step4Documents';
 import Result from './Result';
 import { toBackendFlight } from './mappers';
 
@@ -15,6 +16,8 @@ const INITIAL = {
   flight: {},
   result: null,
   contact: {},
+  caseRef: null,   // generado por /api/submit-claim en el paso 3
+  uploadUrl: null, // fallback si abandona antes de acabar el paso 4
 };
 
 export default function Wizard() {
@@ -46,7 +49,10 @@ export default function Wizard() {
     }
   }, [router.query.tipo]);
 
-  const stepTitle = { 1: 'Tipo de incidencia', 2: 'Datos del vuelo', 3: 'Tus datos' };
+  const stepTitle = { 1: 'Tipo de incidencia', 2: 'Datos del vuelo', 3: 'Tus datos', 4: 'Documentos' };
+  const totalSteps = 4;
+  // Para la barra de progreso usamos un int aunque internamente manejemos 2.5
+  const displayStep = Math.floor(step);
 
   return (
     <section id="reclamar" style={{ background: tokens.slate50, padding: `${tokens.s8}px ${tokens.s5}px` }}>
@@ -56,9 +62,9 @@ export default function Wizard() {
         boxShadow: tokens.shadowLg, padding: tokens.s6,
       }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: tokens.green600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>
-          Paso {step} de 3 · {stepTitle[step]}
+          Paso {displayStep > totalSteps ? totalSteps : displayStep} de {totalSteps} · {stepTitle[displayStep] || 'Confirmación'}
         </div>
-        <ProgressBar step={step} />
+        <ProgressBar step={displayStep > totalSteps ? totalSteps : displayStep} total={totalSteps} />
 
         {step === 1 && (
           <Step1Type
@@ -111,19 +117,35 @@ export default function Wizard() {
             tipo={state.tipo}
             onChange={contact => setState(s => ({ ...s, contact }))}
             onBack={() => setStep(2.5)}
-            onSubmitted={() => {
-              localStorage.removeItem(STORAGE_KEY);
-              setStep(4); // confirmation
+            onSubmitted={data => {
+              setState(s => ({
+                ...s,
+                caseRef:   data?.ref       || null,
+                uploadUrl: data?.uploadUrl || null,
+              }));
+              setStep(4);
             }}
           />
         )}
-        {step === 4 && <Confirmation />}
+        {step === 4 && (
+          <Step4Documents
+            tipo={state.tipo}
+            caseRef={state.caseRef}
+            contact={state.contact}
+            flight={state.flight}
+            result={state.result}
+            onBack={() => setStep(3)}
+            onSkip={() => { localStorage.removeItem(STORAGE_KEY); setStep(5); }}
+            onDone={() => { localStorage.removeItem(STORAGE_KEY); setStep(5); }}
+          />
+        )}
+        {step === 5 && <Confirmation uploadUrl={state.uploadUrl} />}
       </div>
     </section>
   );
 }
 
-function Confirmation() {
+function Confirmation({ uploadUrl }) {
   return (
     <div style={{ textAlign: 'center', padding: `${tokens.s6}px 0` }} className="fade-up">
       <div style={{
@@ -132,10 +154,15 @@ function Confirmation() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         margin: '0 auto', fontSize: 36, fontWeight: 800,
       }}>✓</div>
-      <h2 style={{ fontFamily: tokens.fontHead, fontSize: 26, marginTop: tokens.s4 }}>¡Caso recibido!</h2>
-      <p style={{ color: tokens.slate500, marginTop: tokens.s3 }}>
-        Te hemos enviado un email con el enlace para subir tus documentos. Revísalo para continuar.
+      <h2 style={{ fontFamily: tokens.fontHead, fontSize: 26, marginTop: tokens.s4, color: tokens.navy900 }}>¡Expediente enviado!</h2>
+      <p style={{ color: tokens.slate500, marginTop: tokens.s3, maxWidth: 440, margin: `${tokens.s3}px auto 0` }}>
+        Nuestro equipo revisará la documentación y te contactará en 24 horas para iniciar la reclamación formal ante la aerolínea.
       </p>
+      {uploadUrl && (
+        <p style={{ fontSize: 13, color: tokens.slate500, marginTop: tokens.s4 }}>
+          ¿Faltaba algún documento? <a href={uploadUrl} style={{ color: tokens.green600, textDecoration: 'underline', fontWeight: 600 }}>Añádelo aquí</a>.
+        </p>
+      )}
     </div>
   );
 }
