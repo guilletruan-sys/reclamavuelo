@@ -175,7 +175,7 @@ export default function Result({ result, verifyMeta, tipo, onBack, onContinue })
             } else {
               dataSource = '⚠️ SOLO DECLARACIÓN DEL PASAJERO';
               sourceColor = '#f59e0b';
-              sourceExplanation = 'AviationStack NO devolvió datos del vuelo (normal si es un vuelo antiguo o el plan gratuito no lo encuentra). Claude confió en lo que declaró el pasajero en el formulario.';
+              sourceExplanation = 'AviationStack NO devolvió datos del vuelo. Limitación conocida del plan gratuito: solo verifica vuelos actualmente activos o próximos a salir, no vuelos pasados (ni los de hace unas horas). Para histórico real se necesita plan de pago. Claude confió en lo que declaró el pasajero.';
             }
 
             return (
