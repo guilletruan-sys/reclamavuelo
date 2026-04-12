@@ -1,7 +1,7 @@
 // pages/api/upload-docs.js
 // Recibe documentos, los valida con Claude Vision y envía emails
 
-import { validateDocuments }       from '../../lib/validateDocs';
+import { validateDocuments, validateSingle } from '../../lib/validateDocs';
 import { sendDocumentosValidados, sendExpedienteKmaleon } from '../../lib/email';
 
 export const config = {
@@ -11,6 +11,21 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Modo de validación individual: valida un solo doc sin enviar emails.
+  if (req.body && req.body.validateOnly) {
+    const { docType, dataUrl, caseData: cd } = req.body;
+    if (!docType || !dataUrl) {
+      return res.status(400).json({ ok: false, error: 'Faltan docType o dataUrl' });
+    }
+    try {
+      const result = await validateSingle(docType, dataUrl, cd || {});
+      if (result.ok) return res.status(200).json({ ok: true, extracted: result.extracted });
+      return res.status(200).json({ ok: false, error: result.error });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   const { caseData, files } = req.body;
