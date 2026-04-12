@@ -6,14 +6,15 @@ import Step1Type from './Step1Type';
 import Step2Flight from './Step2Flight';
 import Step3Contact from './Step3Contact';
 import Result from './Result';
+import { toBackendFlight } from './mappers';
 
 const STORAGE_KEY = 'rv-wizard-draft';
 
 const INITIAL = {
   tipo: null,
-  flight: {}, // datos del vuelo
-  result: null, // respuesta del /api/verify
-  contact: {}, // datos personales
+  flight: {},
+  result: null,
+  contact: {},
 };
 
 export default function Wizard() {
@@ -79,12 +80,12 @@ export default function Wizard() {
                 const res = await fetch('/api/verify', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ tipo: state.tipo, ...flight }),
+                  body: JSON.stringify(toBackendFlight(state.tipo, flight)),
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Error al verificar');
                 setState(s => ({ ...s, flight, result: data }));
-                setStep(2.5); // pseudo-step para mostrar Result
+                setStep(2.5);
               } catch (e) {
                 setError(e.message);
               } finally { setLoading(false); }

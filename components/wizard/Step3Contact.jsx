@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { tokens } from '../../lib/theme';
 import { Field, Input } from './fields';
 import { Button } from '../ui';
+import { toBackendFlight, toBackendContact } from './mappers';
 
 export default function Step3Contact({ value, result, flight, tipo, onChange, onBack, onSubmitted }) {
   const [c, setC] = useState({
@@ -18,16 +19,19 @@ export default function Step3Contact({ value, result, flight, tipo, onChange, on
   const onSubmit = async () => {
     setLoading(true); setError(null);
     try {
-      // Reutiliza /api/verify con un flag submit para que dispare emails
-      // (ver lib/email.js — backend ya tiene esta ruta)
-      const res = await fetch('/api/verify', {
+      const payload = {
+        ...toBackendFlight(tipo, flight),
+        ...toBackendContact(c),
+        aiDecision: result,
+      };
+      const res = await fetch('/api/submit-claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submit: true, tipo, ...flight, ...c, result }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error enviando el caso');
-      onSubmitted();
+      onSubmitted(data);
     } catch (e) {
       setError(e.message);
     } finally { setLoading(false); }

@@ -9,7 +9,9 @@ export default function Result({ result, tipo, onBack, onContinue }) {
   const status = result.status || result.decision || 'REVISAR';
   const isOk = status === 'RECLAMABLE';
   const isReview = status === 'REVISAR' || status === 'REVISAR_MANUALMENTE';
-  const amount = result.compensation || result.amount || 0;
+  const amount = result.compensation || result.compensacion_estimada || result.amount || 0;
+  const reasoning = result.reasoning || result.razonamiento_interno;
+  const reason = result.reason || result.motivo;
 
   const theme = isOk
     ? { bg: tokens.green50, border: tokens.green500, icon: '✓', iconBg: tokens.green500, label: 'Reclamable', labelColor: tokens.green700 }
@@ -54,11 +56,11 @@ export default function Result({ result, tipo, onBack, onContinue }) {
 
         {!isOk && !isReview && (
           <div style={{ fontSize: 15, color: tokens.navy700, marginTop: tokens.s3, maxWidth: 420, margin: `${tokens.s3}px auto 0` }}>
-            {result.reason || 'Según nuestro análisis, este caso no cumple los requisitos para reclamación.'}
+            {reason || 'Según nuestro análisis, este caso no cumple los requisitos para reclamación.'}
           </div>
         )}
 
-        {result.reasoning && (
+        {reasoning && (
           <div style={{ marginTop: tokens.s4 }}>
             <button
               onClick={() => setShowReasoning(v => !v)}
@@ -73,7 +75,7 @@ export default function Result({ result, tipo, onBack, onContinue }) {
                 background: tokens.white, border: `1px solid ${tokens.slate200}`,
                 borderRadius: tokens.r1, padding: tokens.s3, marginTop: tokens.s3,
                 fontSize: 13, color: tokens.slate500, textAlign: 'left', lineHeight: 1.6,
-              }}>{result.reasoning}</div>
+              }}>{reasoning}</div>
             )}
           </div>
         )}
