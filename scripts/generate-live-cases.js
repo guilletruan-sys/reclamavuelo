@@ -57,14 +57,7 @@ async function fetchFlights(depIata) {
 }
 
 // ── Haversine (para estimar tramo CE 261) ─────────────────────────
-const POPULAR_COORDS = {
-  MAD: [40.472, -3.561], BCN: [41.297, 2.078], PMI: [39.551, 2.739],
-  AGP: [36.675, -4.499], VLC: [39.489, -0.481], SVQ: [37.418, -5.893],
-  BIO: [43.301, -2.911], LHR: [51.470, -0.454], CDG: [49.012, 2.550],
-  FRA: [50.033, 8.570], AMS: [52.308, 4.763], FCO: [41.800, 12.238],
-  JFK: [40.641, -73.778], EZE: [-34.822, -58.535], DUB: [53.421, -6.270],
-  LIS: [38.774, -9.134], LGW: [51.153, -0.182], STN: [51.885, 0.235],
-};
+const POPULAR_COORDS = require('./airport-coords');
 
 function km(a, b) {
   const ca = POPULAR_COORDS[a], cb = POPULAR_COORDS[b];
