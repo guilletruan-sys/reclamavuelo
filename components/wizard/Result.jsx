@@ -10,8 +10,13 @@ export default function Result({ result, tipo, onBack, onContinue }) {
   const isOk = status === 'RECLAMABLE';
   const isReview = status === 'REVISAR' || status === 'REVISAR_MANUALMENTE';
   const amount = result.compensation || result.compensacion_estimada || result.amount || 0;
-  const reasoning = result.reasoning || result.razonamiento_interno;
-  const reason = result.reason || result.motivo;
+
+  // Campos del agente (Spanish keys) con fallbacks a equivalentes en inglés
+  const summary     = result.resumen_usuario || result.summary || result.reason || result.motivo;
+  const reasoning   = result.razonamiento_interno || result.reasoning;
+  const factors     = result.factores_clave || result.factors || [];
+  const nextStep    = result.siguiente_paso || result.nextStep;
+  const regulation  = result.regulation || (tipo === 'equipaje' || tipo === 'lesiones' ? 'Convenio de Montreal' : 'CE 261/2004');
 
   const theme = isOk
     ? { bg: tokens.green50, border: tokens.green500, icon: '✓', iconBg: tokens.green500, label: 'Reclamable', labelColor: tokens.green700 }
@@ -21,6 +26,7 @@ export default function Result({ result, tipo, onBack, onContinue }) {
 
   return (
     <div className="fade-up">
+      {/* ── Card principal con el titular ──────────────────────── */}
       <div style={{
         background: theme.bg, borderRadius: tokens.r2,
         border: `2px solid ${theme.border}`, padding: tokens.s5,
@@ -37,7 +43,7 @@ export default function Result({ result, tipo, onBack, onContinue }) {
           textTransform: 'uppercase', color: theme.labelColor, marginTop: tokens.s3,
         }}>{theme.label}</div>
 
-        {isOk && (
+        {isOk && amount > 0 && (
           <>
             <div style={{ fontFamily: tokens.fontHead, fontSize: 56, fontWeight: 800, color: tokens.navy900, marginTop: tokens.s2, letterSpacing: '-0.03em' }}>
               {amount}€
@@ -48,39 +54,95 @@ export default function Result({ result, tipo, onBack, onContinue }) {
           </>
         )}
 
-        {isReview && (
-          <div style={{ fontSize: 15, color: tokens.navy700, marginTop: tokens.s3, maxWidth: 420, margin: `${tokens.s3}px auto 0` }}>
-            Tu caso necesita revisión personalizada. Uno de nuestros abogados lo estudiará.
-          </div>
-        )}
-
-        {!isOk && !isReview && (
-          <div style={{ fontSize: 15, color: tokens.navy700, marginTop: tokens.s3, maxWidth: 420, margin: `${tokens.s3}px auto 0` }}>
-            {reason || 'Según nuestro análisis, este caso no cumple los requisitos para reclamación.'}
-          </div>
-        )}
-
-        {reasoning && (
-          <div style={{ marginTop: tokens.s4 }}>
-            <button
-              onClick={() => setShowReasoning(v => !v)}
-              style={{
-                background: 'transparent', border: 'none', color: tokens.slate500,
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
-              }}>
-              {showReasoning ? 'Ocultar' : 'Ver'} razonamiento del análisis
-            </button>
-            {showReasoning && (
-              <div style={{
-                background: tokens.white, border: `1px solid ${tokens.slate200}`,
-                borderRadius: tokens.r1, padding: tokens.s3, marginTop: tokens.s3,
-                fontSize: 13, color: tokens.slate500, textAlign: 'left', lineHeight: 1.6,
-              }}>{reasoning}</div>
-            )}
+        {regulation && (
+          <div style={{ marginTop: isOk ? tokens.s3 : tokens.s2 }}>
+            <Badge variant={isOk ? 'success' : isReview ? 'warning' : 'neutral'}>
+              {regulation}
+            </Badge>
           </div>
         )}
       </div>
 
+      {/* ── Explicación al usuario (siempre visible) ────────────── */}
+      {summary && (
+        <div style={{
+          background: tokens.white,
+          border: `1px solid ${tokens.slate200}`,
+          borderRadius: tokens.r2,
+          padding: tokens.s5,
+          marginTop: tokens.s4,
+        }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: tokens.slate500,
+            letterSpacing: '1px', textTransform: 'uppercase', marginBottom: tokens.s2,
+          }}>Nuestro análisis</div>
+          <p style={{
+            fontSize: 15, lineHeight: 1.6, color: tokens.navy700, margin: 0,
+          }}>{summary}</p>
+
+          {factors.length > 0 && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 6,
+              marginTop: tokens.s3,
+            }}>
+              {factors.map((f, i) => (
+                <Badge key={i} variant="info">{f}</Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Siguiente paso ─────────────────────────────────────── */}
+      {nextStep && (
+        <div style={{
+          background: isOk ? tokens.green50 : isReview ? tokens.amber50 : tokens.slate50,
+          border: `1px solid ${isOk ? tokens.green100 : isReview ? '#fde68a' : tokens.slate200}`,
+          borderRadius: tokens.r2,
+          padding: tokens.s4,
+          marginTop: tokens.s3,
+          display: 'flex',
+          gap: tokens.s3,
+          alignItems: 'flex-start',
+        }}>
+          <div style={{
+            fontSize: 22, lineHeight: 1, flexShrink: 0,
+          }}>{isOk ? '🎯' : isReview ? '📞' : 'ℹ️'}</div>
+          <div>
+            <div style={{
+              fontSize: 11, fontWeight: 700,
+              color: isOk ? tokens.green700 : isReview ? tokens.amber500 : tokens.slate500,
+              letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4,
+            }}>Siguiente paso</div>
+            <div style={{ fontSize: 14, color: tokens.navy700, lineHeight: 1.5 }}>
+              {nextStep}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Razonamiento jurídico (colapsable) ──────────────────── */}
+      {reasoning && (
+        <div style={{ marginTop: tokens.s3, textAlign: 'center' }}>
+          <button
+            onClick={() => setShowReasoning(v => !v)}
+            style={{
+              background: 'transparent', border: 'none', color: tokens.slate500,
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
+            }}>
+            {showReasoning ? 'Ocultar' : 'Ver'} razonamiento jurídico detallado
+          </button>
+          {showReasoning && (
+            <div style={{
+              background: tokens.slate50, border: `1px solid ${tokens.slate200}`,
+              borderRadius: tokens.r1, padding: tokens.s4, marginTop: tokens.s3,
+              fontSize: 13, color: tokens.slate500, textAlign: 'left', lineHeight: 1.6,
+            }} className="fade-in">{reasoning}</div>
+          )}
+        </div>
+      )}
+
+      {/* ── Botones ────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: tokens.s3, marginTop: tokens.s5 }}>
         <Button variant="ghost" onClick={onBack}>← Modificar datos</Button>
         <div style={{ flex: 1 }} />
