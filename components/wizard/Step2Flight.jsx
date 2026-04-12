@@ -40,7 +40,9 @@ export default function Step2Flight({ tipo, value, loading, error, onChange, onB
     onChange(next);
   };
 
-  const coreValid = f.airline && f.flightNumber && f.date && f.from && f.to && f.from !== f.to;
+  // Nº vuelo debe ser 2 letras + al menos 1 dígito (ej: IB2634, FR1823)
+  const flightNumberValid = /^[A-Z]{2}\d{1,4}[A-Z]?$/.test((f.flightNumber || '').trim());
+  const coreValid = f.airline && flightNumberValid && f.date && f.from && f.to && f.from !== f.to;
 
   return (
     <div>
@@ -51,7 +53,7 @@ export default function Step2Flight({ tipo, value, loading, error, onChange, onB
         </Select>
       </Field>
       <div className="grid2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.s3 }}>
-        <Field label="Nº vuelo"><Input placeholder="IB2634" value={f.flightNumber} onChange={e => set('flightNumber', e.target.value.toUpperCase())} /></Field>
+        <Field label="Nº vuelo" hint="Código de aerolínea + número, ej: IB2634"><Input placeholder="IB2634" value={f.flightNumber} onChange={e => set('flightNumber', e.target.value.toUpperCase())} /></Field>
         <Field label="Fecha"><Input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
       </div>
       <div className="grid2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.s3 }}>
