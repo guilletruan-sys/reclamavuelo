@@ -2,7 +2,7 @@
 import Head from 'next/head';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
-import { GREEN, NAVY, LIGHT_G, globalStyles } from '../lib/theme';
+import { GREEN, NAVY, LIGHT_G } from '../lib/theme';
 
 export default function SobreNosotros() {
   return (
@@ -11,9 +11,7 @@ export default function SobreNosotros() {
         <title>Sobre nosotros — ReclamaVuelo</title>
         <meta name="description" content="Conoce al equipo de ReclamaVuelo. Especialistas en reclamaciones aéreas bajo el Reglamento CE 261/2004." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
-      <style>{globalStyles}</style>
       <Nav />
 
       {/* HERO */}

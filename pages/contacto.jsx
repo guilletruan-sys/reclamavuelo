@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
-import { GREEN, NAVY, LIGHT_G, globalStyles, inputStyle } from '../lib/theme';
+import { GREEN, NAVY, LIGHT_G, inputStyle } from '../lib/theme';
 
 export default function Contacto() {
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
@@ -42,9 +42,7 @@ export default function Contacto() {
         <title>Contacto — ReclamaVuelo</title>
         <meta name="description" content="Contacta con el equipo de ReclamaVuelo. Estamos aquí para ayudarte con tu reclamación aérea." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
-      <style>{globalStyles}</style>
       <Nav />
 
       {/* HERO */}

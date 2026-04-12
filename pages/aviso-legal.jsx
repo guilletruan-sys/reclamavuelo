@@ -2,7 +2,7 @@
 import Head from 'next/head';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
-import { GREEN, NAVY, globalStyles } from '../lib/theme';
+import { GREEN, NAVY } from '../lib/theme';
 
 function Section({ title, children }) {
   return (
@@ -19,9 +19,7 @@ export default function AvisoLegal() {
       <Head>
         <title>Aviso Legal — ReclamaVuelo</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
-      <style>{globalStyles}</style>
       <Nav />
 
       <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0f2356 100%)`, padding: '56px 24px', textAlign: 'center' }}>

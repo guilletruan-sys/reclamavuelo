@@ -4,7 +4,6 @@
 import { getFlightStatus, parseFlightNumber }                      from '../../lib/aviationstack';
 import { getMetars, analyzeMetars }                               from '../../lib/metar';
 import { analyzeClaimWithClaude }                                 from '../../lib/agent';
-import { sendConfirmacionUsuario, sendNuevaReclamacionInterna }   from '../../lib/email';
 
 // Mapa IATA → ICAO para METARs (aeropuertos españoles y europeos más comunes)
 const IATA_TO_ICAO = {
@@ -46,12 +45,6 @@ export default async function handler(req, res) {
     cancellationNotice,
     // Overbooking
     airportCompensation,
-    // Datos personales
-    firstName,
-    lastName,
-    email,
-    phone,
-    passengers,
     // Demo mode
     demoMode,
   } = req.body;
@@ -123,82 +116,17 @@ export default async function handler(req, res) {
       agentResult = await analyzeClaimWithClaude(claimData);
     }
 
-    // ── EMAILS (solo si la decisión permite continuar) ────────────────────────
-    const shouldEmail = agentResult.decision === 'RECLAMABLE' || agentResult.decision === 'REVISAR_MANUALMENTE';
-
-    let uploadUrl = null;
-
-    if (shouldEmail && process.env.RESEND_API_KEY && email) {
-      const ref = 'RV-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 90000 + 10000);
-
-      // Token con datos del caso para la página de subida
-      const casePayload = {
-        ref,
-        nombre:       `${firstName || ''} ${lastName || ''}`.trim() || 'Pasajero',
-        email:        email || '',
-        telefono:     phone || '',
-        vuelo:        flightNumber,
-        fecha:        date,
-        ruta:         `${origin} → ${destination}`,
-        incidentType,
-        compensacion: agentResult.compensacion_estimada,
-        pasajeros:    passengers || '1',
-        decision:     agentResult.decision,
-        razonamiento: agentResult.razonamiento_interno,
-      };
-
-      const token = Buffer.from(JSON.stringify(casePayload)).toString('base64');
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://reclamavuelo.com';
-      uploadUrl = `${baseUrl}/aportar-documentos?d=${token}`;
-
-      try {
-        await Promise.all([
-          sendConfirmacionUsuario({
-            to:          casePayload.email,
-            nombre:      casePayload.nombre,
-            ref,
-            vuelo:       casePayload.vuelo,
-            ruta:        casePayload.ruta,
-            compensacion: casePayload.compensacion,
-            decision:    casePayload.decision,
-            uploadUrl,
-          }),
-          sendNuevaReclamacionInterna({
-            ref,
-            decision:     agentResult.decision,
-            confianza:    agentResult.confianza,
-            compensacion: agentResult.compensacion_estimada,
-            vuelo:        flightData.flightNumber,
-            ruta:         casePayload.ruta,
-            fecha:        flightData.date,
-            incidentType,
-            nombre:       casePayload.nombre,
-            email:        casePayload.email,
-            telefono:     casePayload.telefono,
-            pasajeros:    casePayload.pasajeros,
-            razonamiento: agentResult.razonamiento_interno,
-            factores:     agentResult.factores_clave,
-            uploadUrl,
-          }),
-        ]);
-      } catch (emailErr) {
-        console.error('Error enviando emails:', emailErr);
-        // No bloqueamos la respuesta si el email falla
-      }
-    }
-
     return res.status(200).json({
       success:      true,
       flightStatus,
       metarAnalysis,
       decision:     agentResult,
-      uploadUrl,
       demoMode:     !process.env.AVIATIONSTACK_API_KEY || process.env.AVIATIONSTACK_API_KEY === 'tu_aviationstack_key_aqui',
     });
 
   } catch (error) {
     console.error('Error en /api/verify:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', detail: error.message, stack: error.stack?.split('\n').slice(0,3).join(' | ') });
+    return res.status(500).json({ error: 'Error interno del servidor', detail: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 }
 
