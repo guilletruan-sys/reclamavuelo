@@ -84,7 +84,10 @@ export default function Wizard() {
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Error al verificar');
-                setState(s => ({ ...s, flight, result: data }));
+                // /api/verify devuelve { success, decision: {agentResult}, ... }
+                // desempaquetamos el agentResult para que Result.jsx lo use directo
+                const agentResult = data.decision || data;
+                setState(s => ({ ...s, flight, result: agentResult }));
                 setStep(2.5);
               } catch (e) {
                 setError(e.message);
